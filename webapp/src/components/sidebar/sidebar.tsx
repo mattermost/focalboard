@@ -2,13 +2,15 @@
 // See LICENSE.txt for license information.
 import React, {useEffect, useState} from 'react'
 
-import {IWorkspace} from '../../blocks/workspace'
 import {getActiveThemeName, loadTheme} from '../../theme'
-import {WorkspaceTree} from '../../viewModel/workspaceTree'
 import IconButton from '../../widgets/buttons/iconButton'
 import HamburgerIcon from '../../widgets/icons/hamburger'
 import HideSidebarIcon from '../../widgets/icons/hideSidebar'
 import ShowSidebarIcon from '../../widgets/icons/showSidebar'
+import {getSortedBoards} from '../../store/boards'
+import {getSortedViews} from '../../store/views'
+import {getWorkspace} from '../../store/workspace'
+import {useAppSelector} from '../../store/hooks'
 
 import './sidebar.scss'
 
@@ -18,14 +20,14 @@ import SidebarSettingsMenu from './sidebarSettingsMenu'
 import SidebarUserMenu from './sidebarUserMenu'
 
 type Props = {
-    workspace?: IWorkspace
-    workspaceTree: WorkspaceTree,
     activeBoardId?: string
 }
 
 const Sidebar = React.memo((props: Props) => {
     const [isHidden, setHidden] = useState(false)
     const [whiteLogo, setWhiteLogo] = useState(false)
+    const boards = useAppSelector(getSortedBoards)
+    const views = useAppSelector(getSortedViews)
 
     useEffect(() => {
         const theme = loadTheme()
@@ -35,12 +37,10 @@ const Sidebar = React.memo((props: Props) => {
         }
     }, [])
 
-    const {workspace, workspaceTree} = props
-    if (!workspaceTree) {
+    const workspace = useAppSelector(getWorkspace)
+    if (!boards) {
         return <div/>
     }
-
-    const {boards, views} = workspaceTree
 
     if (isHidden) {
         return (
@@ -106,7 +106,6 @@ const Sidebar = React.memo((props: Props) => {
             <div className='octo-spacer'/>
 
             <SidebarAddBoardMenu
-                workspaceTree={props.workspaceTree}
                 activeBoardId={props.activeBoardId}
             />
 

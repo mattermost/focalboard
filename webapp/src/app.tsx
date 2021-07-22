@@ -21,8 +21,9 @@ import LoginPage from './pages/loginPage'
 import RegisterPage from './pages/registerPage'
 import {IUser} from './user'
 import {Utils} from './utils'
+import wsClient from './wsclient'
 import {importNativeAppSettings} from './nativeApp'
-import {fetchCurrentUser, getCurrentUser} from './store/currentUser'
+import {fetchMe, getMe} from './store/users'
 import {getLanguage, fetchLanguage} from './store/language'
 import {useAppSelector, useAppDispatch} from './store/hooks'
 
@@ -31,15 +32,22 @@ const App = React.memo((): JSX.Element => {
 
     const language = useAppSelector<string>(getLanguage)
 
-    const user = useAppSelector<IUser|null>(getCurrentUser)
+    const user = useAppSelector<IUser|null>(getMe)
     const dispatch = useAppDispatch()
     const [initialLoad, setInitialLoad] = useState(false)
 
     useEffect(() => {
         dispatch(fetchLanguage())
-        dispatch(fetchCurrentUser()).then(() => {
+        dispatch(fetchMe()).then(() => {
             setInitialLoad(true)
         })
+    }, [])
+
+    useEffect(() => {
+        wsClient.open()
+        return () => {
+            wsClient.close()
+        }
     }, [])
 
     return (

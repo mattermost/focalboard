@@ -4,35 +4,34 @@ import React, {useEffect, useCallback} from 'react'
 import {FormattedMessage, useIntl, IntlShape} from 'react-intl'
 import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
-import {MutableBoard} from '../../blocks/board'
-import {MutableBoardView} from '../../blocks/boardView'
+import {Board} from '../../blocks/board'
+import {BoardView} from '../../blocks/boardView'
 import mutator from '../../mutator'
 import octoClient from '../../octoClient'
-import {WorkspaceTree} from '../../viewModel/workspaceTree'
 import AddIcon from '../../widgets/icons/add'
 import BoardIcon from '../../widgets/icons/board'
 import Menu from '../../widgets/menu'
 import MenuWrapper from '../../widgets/menuWrapper'
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {getGlobalTemplates, fetchGlobalTemplates} from '../../store/globalTemplates'
+import {getSortedTemplates} from '../../store/boards'
 
 import BoardTemplateMenuItem from './boardTemplateMenuItem'
 
 import './sidebarAddBoardMenu.scss'
 
 type Props = {
-    workspaceTree: WorkspaceTree,
     activeBoardId?: string
 }
 
 const addBoardClicked = async (showBoard: (id: string) => void, intl: IntlShape, activeBoardId?: string) => {
     const oldBoardId = activeBoardId
 
-    const board = new MutableBoard()
+    const board = new Board()
     board.rootId = board.id
 
-    const view = new MutableBoardView()
-    view.viewType = 'board'
+    const view = new BoardView()
+    view.fields.viewType = 'board'
     view.parentId = board.id
     view.rootId = board.rootId
     view.title = intl.formatMessage({id: 'View.NewBoardTitle', defaultMessage: 'Board view'})
@@ -52,9 +51,9 @@ const addBoardClicked = async (showBoard: (id: string) => void, intl: IntlShape,
 }
 
 const addBoardTemplateClicked = async (showBoard: (id: string) => void, activeBoardId?: string) => {
-    const boardTemplate = new MutableBoard()
+    const boardTemplate = new Board()
     boardTemplate.rootId = boardTemplate.id
-    boardTemplate.isTemplate = true
+    boardTemplate.fields.isTemplate = true
     await mutator.insertBlock(
         boardTemplate,
         'add board template',
@@ -69,7 +68,7 @@ const addBoardTemplateClicked = async (showBoard: (id: string) => void, activeBo
 }
 
 const SidebarAddBoardMenu = (props: Props): JSX.Element => {
-    const globalTemplates = useAppSelector<MutableBoard[]>(getGlobalTemplates)
+    const globalTemplates = useAppSelector<Board[]>(getGlobalTemplates)
     const dispatch = useAppDispatch()
     const history = useHistory()
     const match = useRouteMatch()
@@ -85,10 +84,10 @@ const SidebarAddBoardMenu = (props: Props): JSX.Element => {
         }
     }, [octoClient.workspaceId])
 
-    const {workspaceTree} = props
     const intl = useIntl()
+    const templates = useAppSelector(getSortedTemplates)
 
-    if (!workspaceTree) {
+    if (!templates) {
         return <div/>
     }
 
@@ -102,7 +101,7 @@ const SidebarAddBoardMenu = (props: Props): JSX.Element => {
                     />
                 </div>
                 <Menu position='top'>
-                    {workspaceTree.boardTemplates.length > 0 && <>
+                    {templates.length > 0 && <>
                         <Menu.Label>
                             <b>
                                 <FormattedMessage
@@ -115,7 +114,7 @@ const SidebarAddBoardMenu = (props: Props): JSX.Element => {
                         <Menu.Separator/>
                     </>}
 
-                    {workspaceTree.boardTemplates.map((boardTemplate) => (
+                    {templates.map((boardTemplate) => (
                         <BoardTemplateMenuItem
                             key={boardTemplate.id}
                             boardTemplate={boardTemplate}
@@ -125,7 +124,7 @@ const SidebarAddBoardMenu = (props: Props): JSX.Element => {
                         />
                     ))}
 
-                    {globalTemplates.map((boardTemplate: MutableBoard) => (
+                    {globalTemplates.map((boardTemplate: Board) => (
                         <BoardTemplateMenuItem
                             key={boardTemplate.id}
                             boardTemplate={boardTemplate}

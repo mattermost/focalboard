@@ -4,9 +4,12 @@ import React, {useState, useRef, useEffect} from 'react'
 import {FormattedMessage} from 'react-intl'
 
 import {BlockIcons} from '../../blockIcons'
+import {Card} from '../../blocks/card'
+import {BoardView} from '../../blocks/boardView'
+import {Board} from '../../blocks/board'
+import {CommentBlock} from '../../blocks/commentBlock.ts'
+import {ContentBlock} from '../../blocks/contentBlock'
 import mutator from '../../mutator'
-import {BoardTree} from '../../viewModel/boardTree'
-import {CardTree} from '../../viewModel/cardTree'
 import Button from '../../widgets/buttons/button'
 import Editable from '../../widgets/editable'
 import EmojiIcon from '../../widgets/icons/emoji'
@@ -21,15 +24,19 @@ import CardDetailProperties from './cardDetailProperties'
 import './cardDetail.scss'
 
 type Props = {
-    boardTree: BoardTree
-    cardTree: CardTree
+    board: Board
+    activeView: BoardView
+    views: BoardView[]
+    cards: Card[]
+    card: Card
+    comments: CommentBlock[]
+    contents: ContentBlock[]
     readonly: boolean
 }
 
 const CardDetail = (props: Props): JSX.Element|null => {
-    const {cardTree} = props
-    const {card, comments} = cardTree
-    const [title, setTitle] = useState(cardTree.card.title)
+    const {card, comments} = props
+    const [title, setTitle] = useState(card.title)
     const titleRef = useRef<{focus(selectAll?: boolean): void}>(null)
     const titleValueRef = useRef(title)
     titleValueRef.current = title
@@ -42,13 +49,13 @@ const CardDetail = (props: Props): JSX.Element|null => {
 
     useEffect(() => {
         return () => {
-            if (titleValueRef.current !== cardTree?.card.title) {
+            if (titleValueRef.current !== card.title) {
                 mutator.changeTitle(card, titleValueRef.current)
             }
         }
-    }, [cardTree])
+    }, [card])
 
-    if (!cardTree) {
+    if (!card) {
         return null
     }
 
@@ -60,7 +67,7 @@ const CardDetail = (props: Props): JSX.Element|null => {
                     size='l'
                     readonly={props.readonly}
                 />
-                {!props.readonly && !card.icon &&
+                {!props.readonly && !card.fields.icon &&
                     <div className='add-buttons'>
                         <Button
                             onClick={() => {
@@ -84,11 +91,11 @@ const CardDetail = (props: Props): JSX.Element|null => {
                     onChange={(newTitle: string) => setTitle(newTitle)}
                     saveOnEsc={true}
                     onSave={() => {
-                        if (title !== props.cardTree.card.title) {
+                        if (title !== props.card.title) {
                             mutator.changeTitle(card, title)
                         }
                     }}
-                    onCancel={() => setTitle(props.cardTree.card.title)}
+                    onCancel={() => setTitle(props.card.title)}
                     readonly={props.readonly}
                     spellCheck={true}
                 />
@@ -96,8 +103,13 @@ const CardDetail = (props: Props): JSX.Element|null => {
                 {/* Property list */}
 
                 <CardDetailProperties
-                    boardTree={props.boardTree}
-                    cardTree={props.cardTree}
+                    board={props.board}
+                    card={props.card}
+                    contents={props.contents}
+                    comments={props.comments}
+                    cards={props.cards}
+                    activeView={props.activeView}
+                    views={props.views}
                     readonly={props.readonly}
                 />
 
@@ -120,13 +132,14 @@ const CardDetail = (props: Props): JSX.Element|null => {
 
             <div className='CardDetail content fullwidth'>
                 <CardDetailContents
-                    cardTree={props.cardTree}
+                    card={props.card}
+                    contents={props.contents}
                     readonly={props.readonly}
                 />
             </div>
 
             {!props.readonly &&
-                <CardDetailContentsMenu card={props.cardTree.card}/>
+                <CardDetailContentsMenu card={props.card}/>
             }
         </>
     )

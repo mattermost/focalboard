@@ -1,6 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import {IBlock, IMutableBlock} from './blocks/block'
+import {IBlock} from './blocks/block'
 import {ISharing} from './blocks/sharing'
 import {IWorkspace} from './blocks/workspace'
 import {IUser} from './user'
@@ -130,7 +130,7 @@ class OctoClient {
         if (response.status !== 200) {
             return []
         }
-        const blocks = (await this.getJson(response, [])) as IMutableBlock[]
+        const blocks = (await this.getJson(response, [])) as IBlock[]
         this.fixBlocks(blocks)
         return blocks
     }
@@ -142,7 +142,7 @@ class OctoClient {
         if (response.status !== 200) {
             return []
         }
-        const blocks = (await this.getJson(response, [])) as IMutableBlock[]
+        const blocks = (await this.getJson(response, [])) as IBlock[]
         this.fixBlocks(blocks)
         return blocks
     }
@@ -176,18 +176,23 @@ class OctoClient {
         return this.getBlocksWithPath(path)
     }
 
+    async getAllBlocks(): Promise<IBlock[]> {
+        const path = this.workspacePath() + '/blocks'
+        return this.getBlocksWithPath(path)
+    }
+
     private async getBlocksWithPath(path: string): Promise<IBlock[]> {
         const response = await fetch(this.serverUrl + path, {headers: this.headers()})
         if (response.status !== 200) {
             return []
         }
-        const blocks = (await this.getJson(response, [])) as IMutableBlock[]
+        const blocks = (await this.getJson(response, [])) as IBlock[]
         this.fixBlocks(blocks)
         return blocks
     }
 
     // TODO: Remove this fixup code
-    fixBlocks(blocks: IMutableBlock[]): void {
+    fixBlocks(blocks: IBlock[]): void {
         if (!blocks) {
             return
         }
@@ -213,12 +218,12 @@ class OctoClient {
         }
     }
 
-    async updateBlock(block: IMutableBlock): Promise<Response> {
+    async updateBlock(block: IBlock): Promise<Response> {
         block.updateAt = Date.now()
         return this.insertBlocks([block])
     }
 
-    async updateBlocks(blocks: IMutableBlock[]): Promise<Response> {
+    async updateBlocks(blocks: IBlock[]): Promise<Response> {
         const now = Date.now()
         blocks.forEach((block) => {
             block.updateAt = now

@@ -1,6 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import React, {useState, useRef} from 'react'
+import React, {useState, useRef, useCallback} from 'react'
 import EasyMDE from 'easymde'
 import SimpleMDE from 'react-simplemde-editor'
 
@@ -10,7 +10,6 @@ import './markdownEditor.scss'
 type Props = {
     text?: string
     placeholderText?: string
-    uniqueId?: string
     className?: string
     readonly?: boolean
 
@@ -21,7 +20,8 @@ type Props = {
 }
 
 const MarkdownEditor = (props: Props): JSX. Element => {
-    const {placeholderText, uniqueId, onFocus, onBlur, onChange, text} = props
+    const {placeholderText, onFocus, onBlur, onChange, text} = props
+    const [uniqueId] = useState(Utils.createGuid())
 
     const [isEditing, setIsEditing] = useState(false)
     const [active, setActive] = useState(false)
@@ -68,7 +68,7 @@ const MarkdownEditor = (props: Props): JSX. Element => {
 
     const editorElement = (
         <div
-            className='octo-editor-activeEditor'
+            className='octo-editor-active Editor'
 
             // Use visibility instead of display here so the editor is pre-rendered, avoiding a flash on showEditor
             style={isEditing ? {} : {visibility: 'hidden', position: 'absolute', top: 0, left: 0}}
@@ -87,68 +87,70 @@ const MarkdownEditor = (props: Props): JSX. Element => {
                 }
             }}
         >
-            <SimpleMDE
-                id={uniqueId}
-                getMdeInstance={(instance) => {
-                    setEditorInstance(instance)
+            {isEditing &&
+                <SimpleMDE
+                    id={uniqueId}
+                    getMdeInstance={(instance) => {
+                        setEditorInstance(instance)
 
-                    // BUGBUG: This breaks auto-lists
-                    // instance.codemirror.setOption("extraKeys", {
-                    //     "Ctrl-Enter": (cm) => {
-                    //         cm.getInputField().blur()
-                    //     }
-                    // })
-                }}
-                value={text}
+                        // BUGBUG: This breaks auto-lists
+                        // instance.codemirror.setOption("extraKeys", {
+                        //     "Ctrl-Enter": (cm) => {
+                        //         cm.getInputField().blur()
+                        //     }
+                        // })
+                    }}
+                    value={text}
 
-                events={{
-                    change: (instance: any) => {
-                        if (stateAndPropsRef.current.isEditing) {
+                    events={{
+                        change: (instance: any) => {
+                            if (stateAndPropsRef.current.isEditing) {
+                                const newText = instance.getValue()
+                                stateAndPropsRef.current.onChange?.(newText)
+                            }
+                        },
+                        blur: (instance: any) => {
                             const newText = instance.getValue()
-                            stateAndPropsRef.current.onChange?.(newText)
-                        }
-                    },
-                    blur: (instance: any) => {
-                        const newText = instance.getValue()
-                        const oldText = text || ''
-                        if (newText !== oldText && stateAndPropsRef.current.onChange) {
-                            stateAndPropsRef.current.onChange(newText)
-                        }
+                            const oldText = text || ''
+                            if (newText !== oldText && stateAndPropsRef.current.onChange) {
+                                stateAndPropsRef.current.onChange(newText)
+                            }
 
-                        stateAndPropsRef.current.setActive(false)
+                            stateAndPropsRef.current.setActive(false)
 
-                        if (stateAndPropsRef.current.onBlur) {
-                            stateAndPropsRef.current.onBlur(newText)
-                        }
+                            if (stateAndPropsRef.current.onBlur) {
+                                stateAndPropsRef.current.onBlur(newText)
+                            }
 
-                        stateAndPropsRef.current.setIsEditing(false)
-                    },
-                    focus: () => {
-                        stateAndPropsRef.current.setActive(true)
-                        stateAndPropsRef.current.setIsEditing(true)
+                            stateAndPropsRef.current.setIsEditing(false)
+                        },
+                        focus: () => {
+                            stateAndPropsRef.current.setActive(true)
+                            stateAndPropsRef.current.setIsEditing(true)
 
-                        if (stateAndPropsRef.current.onFocus) {
-                            stateAndPropsRef.current.onFocus()
-                        }
-                    },
-                }}
-                options={{
-                    autoDownloadFontAwesome: true,
-                    toolbar: false,
-                    status: false,
-                    spellChecker: true,
-                    nativeSpellcheck: true,
-                    minHeight: '10px',
-                    shortcuts: {
-                        toggleStrikethrough: 'Cmd-.',
-                        togglePreview: null,
-                        drawImage: null,
-                        drawLink: null,
-                        toggleSideBySide: null,
-                        toggleFullScreen: null,
-                    },
-                }}
-            />
+                            if (stateAndPropsRef.current.onFocus) {
+                                stateAndPropsRef.current.onFocus()
+                            }
+                        },
+                    }}
+                    options={{
+                        autoDownloadFontAwesome: true,
+                        toolbar: false,
+                        status: false,
+                        autofocus: true,
+                        spellChecker: true,
+                        nativeSpellcheck: true,
+                        minHeight: '10px',
+                        shortcuts: {
+                            toggleStrikethrough: 'Cmd-.',
+                            togglePreview: null,
+                            drawImage: null,
+                            drawLink: null,
+                            toggleSideBySide: null,
+                            toggleFullScreen: null,
+                        },
+                    }}
+                />}
         </div>)
 
     const element = (
