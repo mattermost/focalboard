@@ -41,6 +41,17 @@ exports[`components/table/TableRow should match snapshot 1`] = `
         </button>
       </div>
     </div>
+    <div
+      class="MenuWrapper optionsMenu"
+    >
+      <div
+        class="Button IconButton"
+      >
+        <i
+          class="CompassIcon icon-dots-horizontal OptionsIcon"
+        />
+      </div>
+    </div>
   </div>
 </div>
 `;
@@ -84,6 +95,17 @@ exports[`components/table/TableRow should match snapshot, collapsed tree 1`] = `
             Open
           </span>
         </button>
+      </div>
+    </div>
+    <div
+      class="MenuWrapper optionsMenu"
+    >
+      <div
+        class="Button IconButton"
+      >
+        <i
+          class="CompassIcon icon-dots-horizontal OptionsIcon"
+        />
       </div>
     </div>
   </div>
@@ -159,6 +181,17 @@ exports[`components/table/TableRow should match snapshot, display properties 1`]
         />
       </div>
     </div>
+    <div
+      class="MenuWrapper optionsMenu"
+    >
+      <div
+        class="Button IconButton"
+      >
+        <i
+          class="CompassIcon icon-dots-horizontal OptionsIcon"
+        />
+      </div>
+    </div>
   </div>
 </div>
 `;
@@ -202,6 +235,17 @@ exports[`components/table/TableRow should match snapshot, isSelected 1`] = `
             Open
           </span>
         </button>
+      </div>
+    </div>
+    <div
+      class="MenuWrapper optionsMenu"
+    >
+      <div
+        class="Button IconButton"
+      >
+        <i
+          class="CompassIcon icon-dots-horizontal OptionsIcon"
+        />
       </div>
     </div>
   </div>
@@ -248,6 +292,17 @@ exports[`components/table/TableRow should match snapshot, read-only 1`] = `
             Open
           </span>
         </button>
+      </div>
+    </div>
+    <div
+      class="MenuWrapper optionsMenu"
+    >
+      <div
+        class="Button IconButton"
+      >
+        <i
+          class="CompassIcon icon-dots-horizontal OptionsIcon"
+        />
       </div>
     </div>
   </div>
@@ -320,6 +375,17 @@ exports[`components/table/TableRow should match snapshot, resizing column 1`] = 
       >
         <span
           class="Label empty "
+        />
+      </div>
+    </div>
+    <div
+      class="MenuWrapper optionsMenu"
+    >
+      <div
+        class="Button IconButton"
+      >
+        <i
+          class="CompassIcon icon-dots-horizontal OptionsIcon"
         />
       </div>
     </div>

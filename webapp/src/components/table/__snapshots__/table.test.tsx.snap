@@ -201,6 +201,17 @@ exports[`components/table/Table extended should match snapshot with CreatedBy 1`
             Tue, Jun 15, 2021 4:22 PM
           </div>
         </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
+          </div>
+        </div>
       </div>
       <div
         class="TableRow octo-table-row"
@@ -277,6 +288,17 @@ exports[`components/table/Table extended should match snapshot with CreatedBy 1`
             class="CreatedAt octo-propertyvalue"
           >
             Tue, Jun 15, 2021 4:22 PM
+          </div>
+        </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
           </div>
         </div>
       </div>
@@ -495,6 +517,17 @@ exports[`components/table/Table extended should match snapshot with CreatedBy 2`
             username_1
           </div>
         </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
+          </div>
+        </div>
       </div>
       <div
         class="TableRow octo-table-row"
@@ -571,6 +604,17 @@ exports[`components/table/Table extended should match snapshot with CreatedBy 2`
             class="UserProperty octo-propertyvalue readonly"
           >
             username_2
+          </div>
+        </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
           </div>
         </div>
       </div>
@@ -789,6 +833,17 @@ exports[`components/table/Table extended should match snapshot with UpdatedAt 1`
             Sun, Jun 20, 2021 12:22 PM
           </div>
         </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
+          </div>
+        </div>
       </div>
       <div
         class="TableRow octo-table-row"
@@ -865,6 +920,17 @@ exports[`components/table/Table extended should match snapshot with UpdatedAt 1`
             class="LastModifiedAt octo-propertyvalue"
           >
             Sun, Jun 20, 2021 12:22 PM
+          </div>
+        </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
           </div>
         </div>
       </div>
@@ -1083,6 +1149,17 @@ exports[`components/table/Table extended should match snapshot with UpdatedBy 1`
             username_4
           </div>
         </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
+          </div>
+        </div>
       </div>
       <div
         class="TableRow octo-table-row"
@@ -1159,6 +1236,17 @@ exports[`components/table/Table extended should match snapshot with UpdatedBy 1`
             class="LastModifiedBy octo-propertyvalue"
           >
             username_3
+          </div>
+        </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
+            />
           </div>
         </div>
       </div>
@@ -1342,6 +1430,17 @@ exports[`components/table/Table should match snapshot 1`] = `
           >
             <span
               class="Label empty "
+            />
+          </div>
+        </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
             />
           </div>
         </div>
@@ -1686,6 +1785,17 @@ exports[`components/table/Table should match snapshot, read-only 1`] = `
           >
             <span
               class="Label empty "
+            />
+          </div>
+        </div>
+        <div
+          class="MenuWrapper optionsMenu"
+        >
+          <div
+            class="Button IconButton"
+          >
+            <i
+              class="CompassIcon icon-dots-horizontal OptionsIcon"
             />
           </div>
         </div>
