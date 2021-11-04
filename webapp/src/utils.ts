@@ -242,12 +242,12 @@ class Utils {
             const newTxt = txt.replace(
                 /\$\$([^\$]*)\$\$/g,
                 (match: string, p1: string) => {
-                    return katex.renderToString(p1, {displayMode: true})
+                    return katex.renderToString(p1, {displayMode: true, throwOnError: false})
                 },
             ).replace(
                 /\$([^\$]*)\$/g,
                 (match: string, p1: string) => {
-                    return katex.renderToString(p1, {displayMode: false})
+                    return katex.renderToString(p1, {displayMode: false, throwOnError: false})
                 },
             )
             return paragraphRenderer(newTxt)
