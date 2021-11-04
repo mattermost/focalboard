@@ -237,23 +237,19 @@ class Utils {
             return `<div class="table-responsive"><table class="markdown__table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`
         }
 
-        const paragraphRenderer = renderer.paragraph
-        renderer.paragraph = (txt:string) => {
-            const newTxt = txt.replace(
-                /\$\$([^\$]*)\$\$/g,
-                (match: string, p1: string) => {
-                    return katex.renderToString(p1, {displayMode: true, throwOnError: false})
-                },
-            ).replace(
-                /\$([^\$]*)\$/g,
-                (match: string, p1: string) => {
-                    return katex.renderToString(p1, {displayMode: false, throwOnError: false})
-                },
-            )
-            return paragraphRenderer(newTxt)
-        }
+        const newText = text.replace(/</g, '&lt;').replace(
+            /\$\$([^$]*?)\$\$([^\S\r\n]*\n)?/g, // Matches $$…$$ plus trailing whitespace & newline (if any)
+            (match: string, p1: string) => {
+                return katex.renderToString(p1, {displayMode: true, throwOnError: false})
+            },
+        ).replace(
+            /\$([^]*?)\$/g,
+            (match: string, p1: string) => {
+                return katex.renderToString(p1, {displayMode: false, throwOnError: false})
+            },
+        )
 
-        const html = marked(text.replace(/</g, '&lt;'), {renderer, breaks: true})
+        const html = marked(newText, {renderer, breaks: true})
         return html.trim()
     }
 
