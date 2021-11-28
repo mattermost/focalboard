@@ -4,6 +4,9 @@ import marked from 'marked'
 import {IntlShape} from 'react-intl'
 import moment from 'moment'
 
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
+
 import {Block} from './blocks/block'
 import {createBoard} from './blocks/board'
 import {createBoardView} from './blocks/boardView'
@@ -232,6 +235,22 @@ class Utils {
 
         renderer.table = (header, body) => {
             return `<div class="table-responsive"><table class="markdown__table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`
+        }
+
+        const paragraphRenderer = renderer.paragraph
+        renderer.paragraph = (txt:string) => {
+            const newTxt = txt.replace(
+                /\$\$([^\$]*)\$\$/g,
+                (match: string, p1: string) => {
+                    return katex.renderToString(p1, {displayMode: true})
+                },
+            ).replace(
+                /\$([^\$]*)\$/g,
+                (match: string, p1: string) => {
+                    return katex.renderToString(p1, {displayMode: false})
+                },
+            )
+            return paragraphRenderer(newTxt)
         }
 
         const html = marked(text.replace(/</g, '&lt;'), {renderer, breaks: true})
