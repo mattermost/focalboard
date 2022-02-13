@@ -553,8 +553,11 @@ func (s *SQLStore) getBlock(db sq.BaseRunner, c store.Container, blockID string)
 	query := s.getQueryBuilder(db).
 		Select(s.blockFields()...).
 		From(s.tablePrefix + "blocks").
-		Where(sq.Eq{"id": blockID}).
-		Where(sq.Eq{"coalesce(workspace_id, '0')": c.WorkspaceID})
+		Where(sq.Eq{"id": blockID})
+
+	if c.WorkspaceID != "" {
+		query = query.Where(sq.Eq{"coalesce(workspace_id, '0')": c.WorkspaceID})
+	}
 
 	rows, err := query.Query()
 	if err != nil {
@@ -588,11 +591,11 @@ func (s *SQLStore) getBlockHistory(db sq.BaseRunner, c store.Container, blockID 
 		OrderBy("insert_at" + order)
 
 	if opts.BeforeUpdateAt != 0 {
-		query = query.Where(sq.LtOrEq{"update_at": opts.BeforeUpdateAt})
+		query = query.Where(sq.Lt{"update_at": opts.BeforeUpdateAt})
 	}
 
 	if opts.AfterUpdateAt != 0 {
-		query = query.Where(sq.GtOrEq{"update_at": opts.AfterUpdateAt})
+		query = query.Where(sq.Gt{"update_at": opts.AfterUpdateAt})
 	}
 
 	if opts.Limit != 0 {

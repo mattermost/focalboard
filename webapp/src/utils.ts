@@ -1,6 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import marked from 'marked'
+import {marked} from 'marked'
 import {IntlShape} from 'react-intl'
 import moment from 'moment'
 
@@ -16,7 +16,7 @@ import {IAppWindow} from './types'
 
 declare let window: IAppWindow
 
-const imageURLForUser = (window as any).Components?.imageURLForUser
+const imageURLForUser = typeof window === 'undefined' ? undefined : (window as any).Components?.imageURLForUser
 const IconClass = 'octo-icon'
 const OpenButtonClass = 'open-button'
 const SpacerClass = 'octo-spacer'
@@ -39,7 +39,7 @@ enum IDType {
 class Utils {
     static createGuid(idType: IDType): string {
         const data = Utils.randomArray(16)
-        return idType + this.base32encode(data, false)
+        return idType + Utils.base32encode(data, false)
     }
 
     static blockTypeToIDType(blockType: string | undefined): IDType {
@@ -131,10 +131,10 @@ class Utils {
     static canvas : HTMLCanvasElement | undefined
     static getTextWidth(displayText: string, fontDescriptor: string): number {
         if (displayText !== '') {
-            if (!this.canvas) {
-                this.canvas = document.createElement('canvas') as HTMLCanvasElement
+            if (!Utils.canvas) {
+                Utils.canvas = document.createElement('canvas') as HTMLCanvasElement
             }
-            const context = this.canvas.getContext('2d')
+            const context = Utils.canvas.getContext('2d')
             if (context) {
                 context.font = fontDescriptor
                 const metrics = context.measureText(displayText)
@@ -237,6 +237,10 @@ class Utils {
             return `<div class="table-responsive"><table class="markdown__table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`
         }
 
+        return this.htmlFromMarkdownWithRenderer(text, renderer)
+    }
+
+    static htmlFromMarkdownWithRenderer(text: string, renderer: marked.Renderer): string {
         const newText = text.replace(/</g, '&lt;').replace(
             /\$\$([^$]*?)\$\$([^\S\r\n]*\n)?/g, // Matches $$…$$ plus trailing whitespace & newline (if any)
             (match: string, p1: string) => {
@@ -251,6 +255,21 @@ class Utils {
 
         const html = marked(newText, {renderer, breaks: true})
         return html.trim()
+    }
+
+    static countCheckboxesInMarkdown(text: string): {total: number, checked: number} {
+        let total = 0
+        let checked = 0
+        const renderer = new marked.Renderer()
+        renderer.checkbox = (isChecked) => {
+            ++total
+            if (isChecked) {
+                ++checked
+            }
+            return ''
+        }
+        this.htmlFromMarkdownWithRenderer(text, renderer)
+        return {total, checked}
     }
 
     // Date and Time
@@ -496,7 +515,7 @@ class Utils {
     }
 
     static getFrontendBaseURL(absolute?: boolean): string {
-        let frontendBaseURL = window.frontendBaseURL || this.getBaseURL(absolute)
+        let frontendBaseURL = window.frontendBaseURL || Utils.getBaseURL(absolute)
         frontendBaseURL = frontendBaseURL.replace(/\/+$/, '')
         if (frontendBaseURL.indexOf('/') === 0) {
             frontendBaseURL = frontendBaseURL.slice(1)
@@ -508,7 +527,7 @@ class Utils {
     }
 
     static buildURL(path: string, absolute?: boolean): string {
-        const baseURL = this.getBaseURL()
+        const baseURL = Utils.getBaseURL()
         let finalPath = baseURL + path
         if (path.indexOf('/') !== 0) {
             finalPath = baseURL + '/' + path
