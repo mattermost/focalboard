@@ -15,8 +15,9 @@ import ShareBoardDialog from './shareBoard'
 
 type Props = {
     boardId: string
+    enableSharedBoards: boolean
 }
-const ShareBoardButton = React.memo((props: Props) => {
+const ShareBoardButton = (props: Props) => {
     const [showShareDialog, setShowShareDialog] = useState(false)
 
     return (
@@ -24,16 +25,18 @@ const ShareBoardButton = React.memo((props: Props) => {
             <Button
                 title='Share board'
                 size='medium'
-                emphasis='secondary'
+                emphasis='primary'
+                icon={
+                    <CompassIcon
+                        icon='globe'
+                        className='CompassIcon'
+                    />
+                }
                 onClick={() => {
                     TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.ShareBoardOpenModal, {board: props.boardId})
                     setShowShareDialog(!showShareDialog)
                 }}
             >
-                <CompassIcon
-                    icon='globe'
-                    className='CompassIcon'
-                />
                 <FormattedMessage
                     id='CenterPanel.Share'
                     defaultMessage='Share'
@@ -43,10 +46,11 @@ const ShareBoardButton = React.memo((props: Props) => {
                 <ShareBoardDialog
                     onClose={() => setShowShareDialog(false)}
                     boardId={props.boardId}
+                    enableSharedBoards={props.enableSharedBoards}
                 />
             }
         </div>
     )
-})
+}
 
-export default ShareBoardButton
+export default React.memo(ShareBoardButton)

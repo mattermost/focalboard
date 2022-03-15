@@ -44,7 +44,7 @@ type LabelProps = {
     isMulti?: boolean
 }
 
-const ValueSelectorLabel = React.memo((props: LabelProps): JSX.Element => {
+const ValueSelectorLabel = (props: LabelProps): JSX.Element => {
     const {option, onDeleteValue, meta, isMulti} = props
     const intl = useIntl()
     if (meta.context === 'value') {
@@ -99,7 +99,7 @@ const ValueSelectorLabel = React.memo((props: LabelProps): JSX.Element => {
             </MenuWrapper>
         </div>
     )
-})
+}
 
 const valueSelectorStyle = {
     ...getSelectBaseStyle(),
@@ -174,6 +174,7 @@ function ValueSelector(props: Props): JSX.Element {
                 />
             )}
             className='ValueSelector'
+            classNamePrefix='ValueSelector'
             options={props.options}
             getOptionLabel={(o: IPropertyOption) => o.value}
             getOptionValue={(o: IPropertyOption) => o.id}
@@ -200,4 +201,4 @@ function ValueSelector(props: Props): JSX.Element {
     )
 }
 
-export default ValueSelector
+export default React.memo(ValueSelector)

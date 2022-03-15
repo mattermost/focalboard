@@ -77,7 +77,12 @@ describe('components/centerPanel', () => {
         },
         searchText: '',
         users: {
-            me: {},
+            me: {
+                id: 'user_id_1',
+                props: {
+                    focalboard_onboardingTourStarted: false,
+                },
+            },
             workspaceUsers: [
                 {username: 'username_1'},
             ],
@@ -85,10 +90,15 @@ describe('components/centerPanel', () => {
         },
         boards: {
             current: board.id,
+            boards: {
+                [board.id]: board,
+            },
+            templates: [],
         },
         cards: {
             templates: [card1, card2],
             cards: [card1, card2],
+            current: card1.id,
         },
         views: {
             views: {

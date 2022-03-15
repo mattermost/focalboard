@@ -15,11 +15,6 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -31,7 +26,21 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item tab-item--active"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item false"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -43,21 +52,12 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                 <div
                   class="text-heading2"
                 >
-                  Publish to the web
+                  Share internally
                 </div>
                 <div
                   class="text-light"
                 >
-                  Publish and share a “read only” link with everyone on the web
-                </div>
-              </div>
-              <div>
-                <div
-                  class="Switch size--medium on"
-                >
-                  <div
-                    class="octo-switch-inner"
-                  />
+                  Users who have permissions will be able to use this link
                 </div>
               </div>
             </div>
@@ -70,35 +70,21 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
             >
               <a
                 class="shareUrl"
-                href="http://localhost/workspace/1/shared/1/1?r=oneToken"
+                href="http://localhost/undefined/workspace/1/1/1"
                 rel="noreferrer"
                 target="_blank"
               >
-                http://localhost/workspace/1/shared/1/1?r=oneToken
+                http://localhost/undefined/workspace/1/1/1
               </a>
-              <div
-                class="octo-tooltip tooltip-top"
-                data-tooltip="Regenerate token"
-              >
-                <button
-                  aria-label="Regenerate token"
-                  title="Regenerate token"
-                  type="button"
-                >
-                  <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
-                  />
-                </button>
-              </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy internal link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copy link
               </span>
             </button>
@@ -125,11 +111,6 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -141,7 +122,21 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item tab-item--active"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item false"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -153,21 +148,12 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                 <div
                   class="text-heading2"
                 >
-                  Publish to the web
+                  Share internally
                 </div>
                 <div
                   class="text-light"
                 >
-                  Publish and share a “read only” link with everyone on the web
-                </div>
-              </div>
-              <div>
-                <div
-                  class="Switch size--medium on"
-                >
-                  <div
-                    class="octo-switch-inner"
-                  />
+                  Users who have permissions will be able to use this link
                 </div>
               </div>
             </div>
@@ -180,35 +166,21 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
             >
               <a
                 class="shareUrl"
-                href="http://localhost/workspace/1/shared/1/1?r=oneToken"
+                href="http://localhost/undefined/workspace/1/1/1"
                 rel="noreferrer"
                 target="_blank"
               >
-                http://localhost/workspace/1/shared/1/1?r=oneToken
+                http://localhost/undefined/workspace/1/1/1
               </a>
-              <div
-                class="octo-tooltip tooltip-top"
-                data-tooltip="Regenerate token"
-              >
-                <button
-                  aria-label="Regenerate token"
-                  title="Regenerate token"
-                  type="button"
-                >
-                  <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
-                  />
-                </button>
-              </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy internal link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copied!
               </span>
             </button>
@@ -235,11 +207,6 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -251,7 +218,21 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item false"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item tab-item--active"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -273,7 +254,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
               </div>
               <div>
                 <div
-                  class="Switch size--medium on"
+                  class="Switch override-main size--medium on"
                 >
                   <div
                     class="octo-switch-inner"
@@ -290,11 +271,11 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
             >
               <a
                 class="shareUrl"
-                href="http://localhost/workspace/1/shared/1/1?r=oneToken"
+                href="http://localhost/workspace/1/shared/1/1?r=anotherToken"
                 rel="noreferrer"
                 target="_blank"
               >
-                http://localhost/workspace/1/shared/1/1?r=oneToken
+                http://localhost/workspace/1/shared/1/1?r=anotherToken
               </a>
               <div
                 class="octo-tooltip tooltip-top"
@@ -306,19 +287,19 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
                   type="button"
                 >
                   <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
+                    class="CompassIcon icon-refresh undefined"
                   />
                 </button>
               </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy public link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copy link
               </span>
             </button>
@@ -345,11 +326,6 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -361,7 +337,21 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item false"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item tab-item--active"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -383,7 +373,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
               </div>
               <div>
                 <div
-                  class="Switch size--medium on"
+                  class="Switch override-main size--medium on"
                 >
                   <div
                     class="octo-switch-inner"
@@ -416,19 +406,19 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
                   type="button"
                 >
                   <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
+                    class="CompassIcon icon-refresh undefined"
                   />
                 </button>
               </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy public link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copy link
               </span>
             </button>
@@ -455,11 +445,6 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -471,7 +456,21 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item false"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item tab-item--active"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -493,7 +492,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
               </div>
               <div>
                 <div
-                  class="Switch size--medium on"
+                  class="Switch override-main size--medium on"
                 >
                   <div
                     class="octo-switch-inner"
@@ -526,19 +525,19 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
                   type="button"
                 >
                   <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
+                    class="CompassIcon icon-refresh undefined"
                   />
                 </button>
               </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy public link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copy link
               </span>
             </button>
@@ -565,11 +564,6 @@ exports[`src/components/shareBoard/shareBoard should match snapshot 1`] = `
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -581,7 +575,21 @@ exports[`src/components/shareBoard/shareBoard should match snapshot 1`] = `
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item tab-item--active"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item false"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -593,24 +601,42 @@ exports[`src/components/shareBoard/shareBoard should match snapshot 1`] = `
                 <div
                   class="text-heading2"
                 >
-                  Publish to the web
+                  Share internally
                 </div>
                 <div
                   class="text-light"
                 >
-                  Publish and share a “read only” link with everyone on the web
-                </div>
-              </div>
-              <div>
-                <div
-                  class="Switch size--medium"
-                >
-                  <div
-                    class="octo-switch-inner"
-                  />
+                  Users who have permissions will be able to use this link
                 </div>
               </div>
             </div>
+          </div>
+          <div
+            class="d-flex justify-content-between tabs-inputs"
+          >
+            <div
+              class="d-flex input-container"
+            >
+              <a
+                class="shareUrl"
+                href="http://localhost/undefined/workspace/1/1/1"
+                rel="noreferrer"
+                target="_blank"
+              >
+                http://localhost/undefined/workspace/1/1/1
+              </a>
+            </div>
+            <button
+              title="Copy internal link"
+              type="button"
+            >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
+              <span>
+                Copy link
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -634,11 +660,6 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -650,7 +671,21 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item tab-item--active"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item false"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -662,21 +697,12 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                 <div
                   class="text-heading2"
                 >
-                  Publish to the web
+                  Share internally
                 </div>
                 <div
                   class="text-light"
                 >
-                  Publish and share a “read only” link with everyone on the web
-                </div>
-              </div>
-              <div>
-                <div
-                  class="Switch size--medium on"
-                >
-                  <div
-                    class="octo-switch-inner"
-                  />
+                  Users who have permissions will be able to use this link
                 </div>
               </div>
             </div>
@@ -689,35 +715,21 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
             >
               <a
                 class="shareUrl"
-                href="http://localhost/workspace/1/shared/1/1?r=oneToken"
+                href="http://localhost/undefined/workspace/1/1/1"
                 rel="noreferrer"
                 target="_blank"
               >
-                http://localhost/workspace/1/shared/1/1?r=oneToken
+                http://localhost/undefined/workspace/1/1/1
               </a>
-              <div
-                class="octo-tooltip tooltip-top"
-                data-tooltip="Regenerate token"
-              >
-                <button
-                  aria-label="Regenerate token"
-                  title="Regenerate token"
-                  type="button"
-                >
-                  <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
-                  />
-                </button>
-              </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy internal link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copy link
               </span>
             </button>
@@ -744,11 +756,6 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -760,7 +767,21 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item tab-item--active"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item false"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -772,21 +793,12 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                 <div
                   class="text-heading2"
                 >
-                  Publish to the web
+                  Share internally
                 </div>
                 <div
                   class="text-light"
                 >
-                  Publish and share a “read only” link with everyone on the web
-                </div>
-              </div>
-              <div>
-                <div
-                  class="Switch size--medium on"
-                >
-                  <div
-                    class="octo-switch-inner"
-                  />
+                  Users who have permissions will be able to use this link
                 </div>
               </div>
             </div>
@@ -799,35 +811,21 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
             >
               <a
                 class="shareUrl"
-                href="http://localhost/test-subpath/plugins/boards/workspace/1/shared/1/1?r=oneToken"
+                href="http://localhost/undefined/workspace/1/1/1"
                 rel="noreferrer"
                 target="_blank"
               >
-                http://localhost/test-subpath/plugins/boards/workspace/1/shared/1/1?r=oneToken
+                http://localhost/undefined/workspace/1/1/1
               </a>
-              <div
-                class="octo-tooltip tooltip-top"
-                data-tooltip="Regenerate token"
-              >
-                <button
-                  aria-label="Regenerate token"
-                  title="Regenerate token"
-                  type="button"
-                >
-                  <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
-                  />
-                </button>
-              </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy internal link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copy link
               </span>
             </button>
@@ -854,11 +852,6 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
         <div
           class="toolbar"
         >
-          <h1
-            class="text-heading5 mt-2"
-          >
-            Share Board
-          </h1>
           <button
             aria-label="Close dialog"
             title="Close dialog"
@@ -870,7 +863,21 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
           </button>
         </div>
         <div
-          class="tabs-modal"
+          class="tabs-container"
+        >
+          <button
+            class="tab-item tab-item--active"
+          >
+            Share
+          </button>
+          <button
+            class="tab-item false"
+          >
+            Publish
+          </button>
+        </div>
+        <div
+          class="tabs-content"
         >
           <div>
             <div
@@ -882,21 +889,12 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                 <div
                   class="text-heading2"
                 >
-                  Publish to the web
+                  Share internally
                 </div>
                 <div
                   class="text-light"
                 >
-                  Publish and share a “read only” link with everyone on the web
-                </div>
-              </div>
-              <div>
-                <div
-                  class="Switch size--medium on"
-                >
-                  <div
-                    class="octo-switch-inner"
-                  />
+                  Users who have permissions will be able to use this link
                 </div>
               </div>
             </div>
@@ -909,35 +907,21 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
             >
               <a
                 class="shareUrl"
-                href="http://localhost/test-subpath/plugins/boards/shared/1/1?r=oneToken"
+                href="http://localhost/test-subpath/plugins/boards1/1"
                 rel="noreferrer"
                 target="_blank"
               >
-                http://localhost/test-subpath/plugins/boards/shared/1/1?r=oneToken
+                http://localhost/test-subpath/plugins/boards1/1
               </a>
-              <div
-                class="octo-tooltip tooltip-top"
-                data-tooltip="Regenerate token"
-              >
-                <button
-                  aria-label="Regenerate token"
-                  title="Regenerate token"
-                  type="button"
-                >
-                  <i
-                    class="CompassIcon icon-refresh Icon Icon--right"
-                  />
-                </button>
-              </div>
             </div>
             <button
-              title="Copy link"
+              title="Copy internal link"
               type="button"
             >
+              <i
+                class="CompassIcon icon-content-copy CompassIcon"
+              />
               <span>
-                <i
-                  class="CompassIcon icon-content-copy CompassIcon"
-                />
                 Copy link
               </span>
             </button>
