@@ -10,10 +10,11 @@ import {createFilterClause} from '../blocks/filterClause'
 import {createFilterGroup} from '../blocks/filterGroup'
 import {ImageBlock, createImageBlock} from '../blocks/imageBlock'
 import {TextBlock, createTextBlock} from '../blocks/textBlock'
-import {Category, CategoryBlocks} from '../store/sidebar'
+import {Category, CategoryBoards} from '../store/sidebar'
 import {Utils} from '../utils'
 import {CheckboxBlock, createCheckboxBlock} from '../blocks/checkboxBlock'
 import {Block} from '../blocks/block'
+import {IUser} from "../user"
 
 class TestBlockFactory {
     static createBoard(): Board {
@@ -175,10 +176,22 @@ class TestBlockFactory {
         }
     }
 
-    static createCategoryBlocks(): CategoryBlocks {
+    static createCategoryBoards(): CategoryBoards {
         return {
             ...TestBlockFactory.createCategory(),
-            blockIDs: [],
+            boardIDs: [],
+        }
+    }
+
+    static createUser(): IUser {
+        return {
+            id: 'user-id-1',
+            username: 'Dwight Schrute',
+            email: 'dwight.schrute@dundermifflin.com',
+            props: {},
+            create_at: Date.now(),
+            update_at: Date.now(),
+            is_bot: false,
         }
     }
 }

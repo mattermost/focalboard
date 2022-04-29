@@ -2,6 +2,7 @@ package integrationtests
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 	"time"
 
@@ -44,10 +45,12 @@ func TestGetBoards(t *testing.T) {
 		teamID := "0"
 		otherTeamID := "other-team-id"
 		user1 := th.GetUser1()
+		user2 := th.GetUser2()
 
 		board1 := &model.Board{
 			TeamID: teamID,
 			Type:   model.BoardTypeOpen,
+			Title:  "Board 1",
 		}
 		rBoard1, err := th.Server.App().CreateBoard(board1, user1.ID, true)
 		require.NoError(t, err)
@@ -56,14 +59,16 @@ func TestGetBoards(t *testing.T) {
 		board2 := &model.Board{
 			TeamID: teamID,
 			Type:   model.BoardTypeOpen,
+			Title:  "Board 2",
 		}
-		rBoard2, err := th.Server.App().CreateBoard(board2, user1.ID, false)
+		rBoard2, err := th.Server.App().CreateBoard(board2, user2.ID, false)
 		require.NoError(t, err)
 		require.NotNil(t, rBoard2)
 
 		board3 := &model.Board{
 			TeamID: teamID,
 			Type:   model.BoardTypePrivate,
+			Title:  "Board 3",
 		}
 		rBoard3, err := th.Server.App().CreateBoard(board3, user1.ID, true)
 		require.NoError(t, err)
@@ -72,35 +77,43 @@ func TestGetBoards(t *testing.T) {
 		board4 := &model.Board{
 			TeamID: teamID,
 			Type:   model.BoardTypePrivate,
+			Title:  "Board 4",
 		}
 		rBoard4, err := th.Server.App().CreateBoard(board4, user1.ID, false)
 		require.NoError(t, err)
 		require.NotNil(t, rBoard4)
 
 		board5 := &model.Board{
+			TeamID: teamID,
+			Type:   model.BoardTypePrivate,
+			Title:  "Board 5",
+		}
+		rBoard5, err := th.Server.App().CreateBoard(board5, user2.ID, true)
+		require.NoError(t, err)
+		require.NotNil(t, rBoard5)
+
+		board6 := &model.Board{
 			TeamID: otherTeamID,
 			Type:   model.BoardTypeOpen,
 		}
-		rBoard5, err := th.Server.App().CreateBoard(board5, user1.ID, true)
+		rBoard6, err := th.Server.App().CreateBoard(board6, user1.ID, true)
 		require.NoError(t, err)
-		require.NotNil(t, rBoard5)
+		require.NotNil(t, rBoard6)
 
 		boards, resp := th.Client.GetBoardsForTeam(teamID)
 		th.CheckOK(resp)
 		require.NotNil(t, boards)
-		require.Len(t, boards, 2)
-
-		boardIDs := []string{}
-		for _, board := range boards {
-			boardIDs = append(boardIDs, board.ID)
-		}
-		require.ElementsMatch(t, []string{rBoard1.ID, rBoard3.ID}, boardIDs)
+		require.ElementsMatch(t, []*model.Board{
+			rBoard1,
+			rBoard2,
+			rBoard3,
+		}, boards)
 
 		boardsFromOtherTeam, resp := th.Client.GetBoardsForTeam(otherTeamID)
 		th.CheckOK(resp)
 		require.NotNil(t, boardsFromOtherTeam)
 		require.Len(t, boardsFromOtherTeam, 1)
-		require.Equal(t, rBoard5.ID, boardsFromOtherTeam[0].ID)
+		require.Equal(t, rBoard6.ID, boardsFromOtherTeam[0].ID)
 	})
 }
 
@@ -152,6 +165,28 @@ func TestCreateBoard(t *testing.T) {
 			require.Equal(t, board.ID, members[0].BoardID)
 			require.True(t, members[0].SchemeAdmin)
 		})
+
+		t.Run("creator should be able to access the public board and its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client.GetBoard(board.ID, "")
+			th.CheckOK(resp)
+			require.NotNil(t, rbBoard)
+			require.Equal(t, board, rbBoard)
+
+			rBlocks, resp := th.Client.GetBlocksForBoard(board.ID)
+			th.CheckOK(resp)
+			require.NotNil(t, rBlocks)
+		})
+
+		t.Run("A non-member user should be able to access the public board but not its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client2.GetBoard(board.ID, "")
+			th.CheckOK(resp)
+			require.NotNil(t, rbBoard)
+			require.Equal(t, board, rbBoard)
+
+			rBlocks, resp := th.Client2.GetBlocksForBoard(board.ID)
+			th.CheckForbidden(resp)
+			require.Nil(t, rBlocks)
+		})
 	})
 
 	t.Run("create private board", func(t *testing.T) {
@@ -160,7 +195,7 @@ func TestCreateBoard(t *testing.T) {
 
 		me := th.GetUser1()
 
-		title := "board title"
+		title := "private board title"
 		teamID := testTeamID
 		newBoard := &model.Board{
 			Title:  title,
@@ -185,13 +220,34 @@ func TestCreateBoard(t *testing.T) {
 			require.Equal(t, board.ID, members[0].BoardID)
 			require.True(t, members[0].SchemeAdmin)
 		})
+
+		t.Run("creator should be able to access the private board and its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client.GetBoard(board.ID, "")
+			th.CheckOK(resp)
+			require.NotNil(t, rbBoard)
+			require.Equal(t, board, rbBoard)
+
+			rBlocks, resp := th.Client.GetBlocksForBoard(board.ID)
+			th.CheckOK(resp)
+			require.NotNil(t, rBlocks)
+		})
+
+		t.Run("unauthorized user should not be able to access the private board or its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client2.GetBoard(board.ID, "")
+			th.CheckForbidden(resp)
+			require.Nil(t, rbBoard)
+
+			rBlocks, resp := th.Client2.GetBlocksForBoard(board.ID)
+			th.CheckForbidden(resp)
+			require.Nil(t, rBlocks)
+		})
 	})
 
 	t.Run("create invalid board", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
 
-		title := "board title"
+		title := "invalid board title"
 		teamID := testTeamID
 		user1 := th.GetUser1()
 
@@ -240,6 +296,182 @@ func TestCreateBoard(t *testing.T) {
 			require.NoError(t, err)
 			require.Empty(t, boards)
 		})
+	})
+}
+
+func TestCreateBoardTemplate(t *testing.T) {
+	t.Run("create public board template", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+
+		me := th.GetUser1()
+
+		title := "board template 1"
+		teamID := testTeamID
+		newBoard := &model.Board{
+			Title:      title,
+			Type:       model.BoardTypeOpen,
+			TeamID:     teamID,
+			IsTemplate: true,
+		}
+		board, resp := th.Client.CreateBoard(newBoard)
+		th.CheckOK(resp)
+		require.NoError(t, resp.Error)
+		require.NotNil(t, board)
+		require.NotNil(t, board.ID)
+		require.Equal(t, title, board.Title)
+		require.Equal(t, model.BoardTypeOpen, board.Type)
+		require.Equal(t, teamID, board.TeamID)
+		require.Equal(t, me.ID, board.CreatedBy)
+		require.Equal(t, me.ID, board.ModifiedBy)
+
+		t.Run("creating a board template should make the creator an admin", func(t *testing.T) {
+			members, err := th.Server.App().GetMembersForBoard(board.ID)
+			require.NoError(t, err)
+			require.Len(t, members, 1)
+			require.Equal(t, me.ID, members[0].UserID)
+			require.Equal(t, board.ID, members[0].BoardID)
+			require.True(t, members[0].SchemeAdmin)
+		})
+
+		t.Run("creator should be able to access the public board template and its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client.GetBoard(board.ID, "")
+			th.CheckOK(resp)
+			require.NotNil(t, rbBoard)
+			require.Equal(t, board, rbBoard)
+
+			rBlocks, resp := th.Client.GetBlocksForBoard(board.ID)
+			th.CheckOK(resp)
+			require.NotNil(t, rBlocks)
+		})
+
+		t.Run("another user should be able to access the public board template and its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client2.GetBoard(board.ID, "")
+			th.CheckOK(resp)
+			require.NotNil(t, rbBoard)
+			require.Equal(t, board, rbBoard)
+
+			rBlocks, resp := th.Client2.GetBlocksForBoard(board.ID)
+			th.CheckOK(resp)
+			require.NotNil(t, rBlocks)
+		})
+	})
+
+	t.Run("create private board template", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+
+		me := th.GetUser1()
+
+		title := "private board template title"
+		teamID := testTeamID
+		newBoard := &model.Board{
+			Title:      title,
+			Type:       model.BoardTypePrivate,
+			TeamID:     teamID,
+			IsTemplate: true,
+		}
+		board, resp := th.Client.CreateBoard(newBoard)
+		th.CheckOK(resp)
+		require.NotNil(t, board)
+		require.NotNil(t, board.ID)
+		require.Equal(t, title, board.Title)
+		require.Equal(t, model.BoardTypePrivate, board.Type)
+		require.Equal(t, teamID, board.TeamID)
+		require.Equal(t, me.ID, board.CreatedBy)
+		require.Equal(t, me.ID, board.ModifiedBy)
+
+		t.Run("creating a board template should make the creator an admin", func(t *testing.T) {
+			members, err := th.Server.App().GetMembersForBoard(board.ID)
+			require.NoError(t, err)
+			require.Len(t, members, 1)
+			require.Equal(t, me.ID, members[0].UserID)
+			require.Equal(t, board.ID, members[0].BoardID)
+			require.True(t, members[0].SchemeAdmin)
+		})
+
+		t.Run("creator should be able to access the private board template and its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client.GetBoard(board.ID, "")
+			th.CheckOK(resp)
+			require.NotNil(t, rbBoard)
+			require.Equal(t, board, rbBoard)
+
+			rBlocks, resp := th.Client.GetBlocksForBoard(board.ID)
+			th.CheckOK(resp)
+			require.NotNil(t, rBlocks)
+		})
+
+		t.Run("unauthorized user should not be able to access the private board template or its blocks", func(t *testing.T) {
+			rbBoard, resp := th.Client2.GetBoard(board.ID, "")
+			th.CheckForbidden(resp)
+			require.Nil(t, rbBoard)
+
+			rBlocks, resp := th.Client2.GetBlocksForBoard(board.ID)
+			th.CheckForbidden(resp)
+			require.Nil(t, rBlocks)
+		})
+	})
+}
+
+func TestGetAllBlocksForBoard(t *testing.T) {
+	th := SetupTestHelperWithToken(t).Start()
+	defer th.TearDown()
+
+	board := th.CreateBoard("board-id", model.BoardTypeOpen)
+
+	parentBlockID := utils.NewID(utils.IDTypeBlock)
+	childBlockID1 := utils.NewID(utils.IDTypeBlock)
+	childBlockID2 := utils.NewID(utils.IDTypeBlock)
+
+	t.Run("Create the block structure", func(t *testing.T) {
+		newBlocks := []model.Block{
+			{
+				ID:       parentBlockID,
+				BoardID:  board.ID,
+				CreateAt: 1,
+				UpdateAt: 1,
+				Type:     model.TypeCard,
+			},
+			{
+				ID:       childBlockID1,
+				BoardID:  board.ID,
+				ParentID: parentBlockID,
+				CreateAt: 2,
+				UpdateAt: 2,
+				Type:     model.TypeCard,
+			},
+			{
+				ID:       childBlockID2,
+				BoardID:  board.ID,
+				ParentID: parentBlockID,
+				CreateAt: 2,
+				UpdateAt: 2,
+				Type:     model.TypeCard,
+			},
+		}
+
+		insertedBlocks, resp := th.Client.InsertBlocks(board.ID, newBlocks)
+		require.NoError(t, resp.Error)
+		require.Len(t, insertedBlocks, len(newBlocks))
+
+		insertedBlockIDs := make([]string, len(insertedBlocks))
+		for i, b := range insertedBlocks {
+			insertedBlockIDs[i] = b.ID
+		}
+
+		fetchedBlocks, resp := th.Client.GetAllBlocksForBoard(board.ID)
+		require.NoError(t, resp.Error)
+		require.Len(t, fetchedBlocks, len(newBlocks))
+
+		fetchedblockIDs := make([]string, len(fetchedBlocks))
+		for i, b := range fetchedBlocks {
+			fetchedblockIDs[i] = b.ID
+		}
+
+		sort.Strings(insertedBlockIDs)
+		sort.Strings(fetchedblockIDs)
+
+		require.Equal(t, insertedBlockIDs, fetchedblockIDs)
 	})
 }
 
@@ -311,25 +543,25 @@ func TestSearchBoards(t *testing.T) {
 				Name:        "should return all boards where user1 is member or that are public",
 				Client:      th.Client,
 				Term:        "board",
-				ExpectedIDs: []string{rBoard1.ID, rBoard2.ID, rBoard3.ID},
+				ExpectedIDs: []string{rBoard1.ID, rBoard2.ID, rBoard3.ID, board5.ID},
 			},
 			{
 				Name:        "matching a full word",
 				Client:      th.Client,
 				Term:        "admin",
-				ExpectedIDs: []string{rBoard1.ID, rBoard3.ID},
+				ExpectedIDs: []string{rBoard1.ID, rBoard3.ID, board5.ID},
 			},
 			{
 				Name:        "matching part of the word",
 				Client:      th.Client,
 				Term:        "ubli",
-				ExpectedIDs: []string{rBoard1.ID, rBoard2.ID},
+				ExpectedIDs: []string{rBoard1.ID, rBoard2.ID, board5.ID},
 			},
 			{
 				Name:        "case insensitive",
 				Client:      th.Client,
 				Term:        "UBLI",
-				ExpectedIDs: []string{rBoard1.ID, rBoard2.ID},
+				ExpectedIDs: []string{rBoard1.ID, rBoard2.ID, board5.ID},
 			},
 			{
 				Name:        "user2 can only see the public boards, as he's not a member of any",
@@ -815,7 +1047,7 @@ func TestDeleteBoard(t *testing.T) {
 		defer th.TearDown()
 
 		success, resp := th.Client.DeleteBoard("non-existing-board")
-		th.CheckForbidden(resp)
+		th.CheckNotFound(resp)
 		require.False(t, success)
 	})
 
@@ -838,6 +1070,128 @@ func TestDeleteBoard(t *testing.T) {
 		dbBoard, err := th.Server.App().GetBoard(board.ID)
 		require.NoError(t, err)
 		require.Nil(t, dbBoard)
+	})
+}
+
+func TestUndeleteBoard(t *testing.T) {
+	teamID := testTeamID
+
+	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+		th.Logout(th.Client)
+
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, "user-id", false)
+		require.NoError(t, err)
+
+		time.Sleep(1 * time.Millisecond)
+		err = th.Server.App().DeleteBoard(newBoard.ID, "user-id")
+		require.NoError(t, err)
+
+		success, resp := th.Client.UndeleteBoard(board.ID)
+		th.CheckUnauthorized(resp)
+		require.False(t, success)
+
+		dbBoard, err := th.Server.App().GetBoard(board.ID)
+		require.NoError(t, err)
+		require.Nil(t, dbBoard)
+	})
+
+	t.Run("a user without membership should be rejected", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, "some-user-id", false)
+		require.NoError(t, err)
+
+		time.Sleep(1 * time.Millisecond)
+		err = th.Server.App().DeleteBoard(newBoard.ID, "some-user-id")
+		require.NoError(t, err)
+
+		success, resp := th.Client.UndeleteBoard(board.ID)
+		th.CheckForbidden(resp)
+		require.False(t, success)
+
+		dbBoard, err := th.Server.App().GetBoard(board.ID)
+		require.NoError(t, err)
+		require.Nil(t, dbBoard)
+	})
+
+	t.Run("a user with membership but without permissions should be rejected", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, "some-user-id", false)
+		require.NoError(t, err)
+
+		newUser2Member := &model.BoardMember{
+			UserID:       "user-id",
+			BoardID:      board.ID,
+			SchemeEditor: true,
+		}
+		_, err = th.Server.App().AddMemberToBoard(newUser2Member)
+		require.NoError(t, err)
+
+		time.Sleep(1 * time.Millisecond)
+		err = th.Server.App().DeleteBoard(newBoard.ID, "some-user-id")
+		require.NoError(t, err)
+
+		success, resp := th.Client.UndeleteBoard(board.ID)
+		th.CheckForbidden(resp)
+		require.False(t, success)
+
+		dbBoard, err := th.Server.App().GetBoard(board.ID)
+		require.NoError(t, err)
+		require.Nil(t, dbBoard)
+	})
+
+	t.Run("non existing board", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+
+		success, resp := th.Client.UndeleteBoard("non-existing-board")
+		th.CheckForbidden(resp)
+		require.False(t, success)
+	})
+
+	t.Run("an existing deleted board should be correctly undeleted", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, true)
+		require.NoError(t, err)
+
+		time.Sleep(1 * time.Millisecond)
+		err = th.Server.App().DeleteBoard(newBoard.ID, "user-id")
+		require.NoError(t, err)
+
+		success, resp := th.Client.UndeleteBoard(board.ID)
+		th.CheckOK(resp)
+		require.True(t, success)
+
+		dbBoard, err := th.Server.App().GetBoard(board.ID)
+		require.NoError(t, err)
+		require.NotNil(t, dbBoard)
 	})
 }
 
@@ -1023,15 +1377,26 @@ func TestAddMember(t *testing.T) {
 			}
 
 			member, resp := th.Client2.AddMemberToBoard(newMember)
-			th.CheckOK(resp)
-			require.Equal(t, newMember.UserID, member.UserID)
-			require.Equal(t, newMember.BoardID, member.BoardID)
-			require.Equal(t, newMember.SchemeAdmin, member.SchemeAdmin)
-			require.Equal(t, newMember.SchemeEditor, member.SchemeEditor)
-			require.False(t, member.SchemeCommenter)
-			require.False(t, member.SchemeViewer)
+			th.CheckForbidden(resp)
+			require.Nil(t, member)
 
-			members, resp := th.Client.GetMembersForBoard(board.ID)
+			members, resp := th.Client2.GetMembersForBoard(board.ID)
+			th.CheckForbidden(resp)
+			require.Nil(t, members)
+
+			// Join board - will become an editor
+			member, resp = th.Client2.JoinBoard(board.ID)
+			th.CheckOK(resp)
+			require.NoError(t, resp.Error)
+			require.NotNil(t, member)
+			require.Equal(t, board.ID, member.BoardID)
+			require.Equal(t, th.GetUser2().ID, member.UserID)
+
+			member, resp = th.Client2.AddMemberToBoard(newMember)
+			th.CheckForbidden(resp)
+			require.Nil(t, member)
+
+			members, resp = th.Client2.GetMembersForBoard(board.ID)
 			th.CheckOK(resp)
 			require.Len(t, members, 2)
 		})
@@ -1370,13 +1735,14 @@ func TestDeleteMember(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, members, 2)
 
+			// Should fail - must call leave to leave a board
 			success, resp := th.Client2.DeleteBoardMember(memberToDelete)
-			th.CheckOK(resp)
-			require.True(t, success)
+			th.CheckForbidden(resp)
+			require.False(t, success)
 
 			members, err = th.Server.App().GetMembersForBoard(board.ID)
 			require.NoError(t, err)
-			require.Len(t, members, 1)
+			require.Len(t, members, 2)
 		})
 
 		//nolint:dupl
@@ -1455,6 +1821,9 @@ func TestGetTemplates(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
 
+		err := th.Server.App().InitTemplates()
+		require.NoError(t, err, "InitTemplates should not fail")
+
 		teamID := "my-team-id"
 		rBoards, resp := th.Client.GetTemplatesForTeam("0")
 		th.CheckOK(resp)
@@ -1497,6 +1866,75 @@ func TestGetTemplates(t *testing.T) {
 			require.Equal(t, len(rBoardsAndBlock.Blocks), len(rBlocks2))
 		}
 		t.Log("\n\n")
+	})
+}
+
+func TestDuplicateBoard(t *testing.T) {
+	t.Run("create and duplicate public board", func(t *testing.T) {
+		th := SetupTestHelper(t).InitBasic()
+		defer th.TearDown()
+
+		me := th.GetUser1()
+
+		title := "Public board"
+		teamID := testTeamID
+		newBoard := &model.Board{
+			Title:  title,
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, resp := th.Client.CreateBoard(newBoard)
+		th.CheckOK(resp)
+		require.NoError(t, resp.Error)
+		require.NotNil(t, board)
+		require.NotNil(t, board.ID)
+		require.Equal(t, title, board.Title)
+		require.Equal(t, model.BoardTypeOpen, board.Type)
+		require.Equal(t, teamID, board.TeamID)
+		require.Equal(t, me.ID, board.CreatedBy)
+		require.Equal(t, me.ID, board.ModifiedBy)
+
+		newBlocks := []model.Block{
+			{
+				ID:       utils.NewID(utils.IDTypeBlock),
+				BoardID:  board.ID,
+				CreateAt: 1,
+				UpdateAt: 1,
+				Title:    "View 1",
+				Type:     model.TypeView,
+			},
+		}
+
+		newBlocks, resp = th.Client.InsertBlocks(board.ID, newBlocks)
+		require.NoError(t, resp.Error)
+		require.Len(t, newBlocks, 1)
+
+		newUserMember := &model.BoardMember{
+			UserID:       th.GetUser2().ID,
+			BoardID:      board.ID,
+			SchemeEditor: true,
+		}
+		th.Client.AddMemberToBoard(newUserMember)
+
+		members, err := th.Server.App().GetMembersForBoard(board.ID)
+		require.NoError(t, err)
+		require.Len(t, members, 2)
+
+		// Duplicate the board
+		rBoardsAndBlock, resp := th.Client.DuplicateBoard(board.ID, false, teamID)
+		th.CheckOK(resp)
+		require.NotNil(t, rBoardsAndBlock)
+		require.Equal(t, len(rBoardsAndBlock.Boards), 1)
+		require.Equal(t, len(rBoardsAndBlock.Blocks), 1)
+		duplicateBoard := rBoardsAndBlock.Boards[0]
+		require.Equal(t, duplicateBoard.Type, model.BoardTypePrivate, "Duplicated board should be private")
+
+		members, err = th.Server.App().GetMembersForBoard(duplicateBoard.ID)
+		require.NoError(t, err)
+		require.Len(t, members, 1, "Duplicated board should only have one member")
+		require.Equal(t, me.ID, members[0].UserID)
+		require.Equal(t, duplicateBoard.ID, members[0].BoardID)
+		require.True(t, members[0].SchemeAdmin)
 	})
 }
 

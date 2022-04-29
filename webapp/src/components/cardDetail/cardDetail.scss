@@ -66,10 +66,12 @@
     .ValueSelector {
         padding: 4px 0;
         background-color: rgba(var(--center-channel-color-rgb), 0.08);
+        width: auto;
     }
 
     .ValueSelector__menu {
         max-width: 100%;
+        z-index: 10;
 
         .value-menu-option {
             justify-content: space-between;

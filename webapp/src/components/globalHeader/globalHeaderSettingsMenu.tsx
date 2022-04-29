@@ -72,14 +72,6 @@ const GlobalHeaderSettingsMenu = (props: Props) => {
                             ))
                         }
                     </Menu.SubMenu>
-                    <Menu.Text
-                        id='export'
-                        name={intl.formatMessage({id: 'Sidebar.export-archive', defaultMessage: 'Export archive'})}
-                        onClick={async () => {
-                            TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.ExportArchive)
-                            Archiver.exportFullArchive()
-                        }}
-                    />
                     <Menu.SubMenu
                         id='lang'
                         name={intl.formatMessage({id: 'Sidebar.set-language', defaultMessage: 'Set language'})}
@@ -105,6 +97,7 @@ const GlobalHeaderSettingsMenu = (props: Props) => {
                     />
                     <Menu.Text
                         id='product-tour'
+                        className='product-tour'
                         name={intl.formatMessage({id: 'Sidebar.product-tour', defaultMessage: 'Product tour'})}
                         onClick={async () => {
                             TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.StartTour)
@@ -118,6 +111,7 @@ const GlobalHeaderSettingsMenu = (props: Props) => {
 
                             const patch: UserConfigPatch = {
                                 updatedFields: {
+                                    [UserPropPrefix + 'onboardingTourStarted']: '1',
                                     [UserPropPrefix + 'onboardingTourStep']: '0',
                                     [UserPropPrefix + 'tourCategory']: 'onboarding',
                                 },

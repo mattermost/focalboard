@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/services/store"
+	"github.com/mattermost/focalboard/server/services/permissions"
 	"github.com/mattermost/focalboard/server/utils"
 	"github.com/wiggin77/merror"
 
@@ -31,10 +31,11 @@ var (
 // via notifications hints written to the database so that fewer notifications are sent for active
 // blocks.
 type notifier struct {
-	serverRoot string
-	store      Store
-	delivery   SubscriptionDelivery
-	logger     *mlog.Logger
+	serverRoot  string
+	store       Store
+	permissions permissions.PermissionsService
+	delivery    SubscriptionDelivery
+	logger      *mlog.Logger
 
 	hints chan *model.NotificationHint
 
@@ -44,12 +45,13 @@ type notifier struct {
 
 func newNotifier(params BackendParams) *notifier {
 	return &notifier{
-		serverRoot: params.ServerRoot,
-		store:      params.Store,
-		delivery:   params.Delivery,
-		logger:     params.Logger,
-		done:       nil,
-		hints:      make(chan *model.NotificationHint, hintQueueSize),
+		serverRoot:  params.ServerRoot,
+		store:       params.Store,
+		permissions: params.Permissions,
+		delivery:    params.Delivery,
+		logger:      params.Logger,
+		done:        nil,
+		hints:       make(chan *model.NotificationHint, hintQueueSize),
 	}
 }
 
@@ -80,7 +82,7 @@ func (n *notifier) loop() {
 	for {
 		hint, err := n.store.GetNextNotificationHint(false)
 		switch {
-		case n.store.IsErrNotFound(err):
+		case model.IsErrNotFound(err):
 			// no hints in table; wait up to an hour or when `onNotifyHint` is called again
 			nextNotify = time.Now().Add(time.Hour * 1)
 			n.logger.Debug("notify loop - no hints in queue", mlog.Time("next_check", nextNotify))
@@ -129,7 +131,7 @@ func (n *notifier) notify() {
 
 	hint, err = n.store.GetNextNotificationHint(true)
 	if err != nil {
-		if store.IsErrNotFound(err) {
+		if model.IsErrNotFound(err) {
 			// Expected when multiple nodes in a cluster try to process the same hint at the same time.
 			// This simply means the other node won. Returning here will simply try fetching another hint.
 			return
@@ -216,10 +218,20 @@ func (n *notifier) notifySubscribers(hint *model.NotificationHint) error {
 			// don't notify the author of their own changes.
 			authorName, isAuthor := diffAuthors[sub.SubscriberID]
 			if isAuthor && len(diffAuthors) == 1 {
-				n.logger.Debug("notifySubscribers - deliver, skipping author",
+				n.logger.Debug("notifySubscribers - skipping author",
 					mlog.Any("hint", hint),
 					mlog.String("author_id", sub.SubscriberID),
 					mlog.String("author_username", authorName),
+				)
+				continue
+			}
+
+			// make sure the subscriber still has permissions for the board.
+			if !n.permissions.HasPermissionToBoard(sub.SubscriberID, board.ID, model.PermissionViewBoard) {
+				n.logger.Debug("notifySubscribers - skipping non-board member",
+					mlog.Any("hint", hint),
+					mlog.String("subscriber_id", sub.SubscriberID),
+					mlog.String("board_id", board.ID),
 				)
 				continue
 			}

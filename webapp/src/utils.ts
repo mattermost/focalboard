@@ -17,7 +17,7 @@ import {createCard} from './blocks/card'
 import {createCommentBlock} from './blocks/commentBlock'
 import {IAppWindow} from './types'
 import {ChangeHandlerType, WSMessage} from './wsclient'
-import {BlockCategoryWebsocketData, Category} from './store/sidebar'
+import {BoardCategoryWebsocketData, Category} from './store/sidebar'
 
 declare let window: IAppWindow
 
@@ -28,7 +28,7 @@ const SpacerClass = 'octo-spacer'
 const HorizontalGripClass = 'HorizontalGrip'
 const base32Alphabet = 'ybndrfg8ejkmcpqxot1uwisza345h769'
 
-export type WSMessagePayloads = Block | Category | BlockCategoryWebsocketData | BoardType | BoardMember | null
+export type WSMessagePayloads = Block | Category | BoardCategoryWebsocketData | BoardType | BoardMember | null
 
 // eslint-disable-next-line no-shadow
 enum IDType {

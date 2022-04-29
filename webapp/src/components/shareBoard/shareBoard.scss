@@ -174,12 +174,15 @@
         max-height: 282px;
         overflow: auto;
         border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+
+        .user-item {
+            justify-content: space-between;
+        }
     }
 
     .user-item {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         height: 56px;
         padding: 0 16px;
 
@@ -207,6 +210,9 @@
             border: 0;
             color: rgba(var(--link-color-rgb), 1);
             padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
 
             &:hover {
                 text-decoration: underline;
@@ -215,8 +221,8 @@
 
         .Menu {
             position: fixed;
-            left: 55%;
-            right: calc(45% - 240px);
+            left: 53%;
+            right: auto;
 
             .menu-contents {
                 min-width: 240px;

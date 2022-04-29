@@ -2,13 +2,13 @@ package sqlstore
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/services/store"
 	"github.com/mattermost/focalboard/server/utils"
 
 	"github.com/mattermost/mattermost-server/v6/shared/mlog"
@@ -21,7 +21,20 @@ func (s *SQLStore) CloseRows(rows *sql.Rows) {
 }
 
 func (s *SQLStore) IsErrNotFound(err error) bool {
-	return store.IsErrNotFound(err)
+	return model.IsErrNotFound(err)
+}
+
+func (s *SQLStore) MarshalJSONB(data interface{}) ([]byte, error) {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.isBinaryParam {
+		b = append([]byte{0x01}, b...)
+	}
+
+	return b, nil
 }
 
 func PrepareNewTestDatabase() (dbType string, connectionString string, err error) {

@@ -36,7 +36,7 @@ ci: server-test
 	cd webapp; npm run cypress:ci
 
 templates-archive: ## Build templates archive file
-	cd server/assets/build-template-archive; go run -tags '$(BUILD_TAGS)' main.go --dir="../templates-boardarchive" --out="../templates.boardarchive" 
+	cd server/assets/build-template-archive; go run -tags '$(BUILD_TAGS)' main.go --dir="../templates-boardarchive" --out="../templates.boardarchive"
 
 server: templates-archive ## Build server for local environment.
 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=dev")
@@ -115,8 +115,16 @@ watch-server-test: modd-precheck ## Run server tests watching for changes
 
 server-test: server-test-sqlite server-test-mysql server-test-postgres ## Run server tests
 
+server-test-sqlite: export FB_UNIT_TESTING=1
+
 server-test-sqlite: templates-archive ## Run server tests using sqlite
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -count=1 -timeout=30m ./...
+	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-sqlite-profile.coverage -count=1 -timeout=30m ./...
+	cd server; go tool cover -func server-sqlite-profile.coverage
+
+server-test-mini-sqlite: export FB_UNIT_TESTING=1
+
+server-test-mini-sqlite: templates-archive ## Run server tests using sqlite
+	cd server/integrationtests; go test -tags '$(BUILD_TAGS)' -race -v -count=1 -timeout=30m ./...
 
 server-test-mysql: export FB_UNIT_TESTING=1
 server-test-mysql: export FB_STORE_TEST_DB_TYPE=mysql
@@ -126,7 +134,10 @@ server-test-mysql: templates-archive ## Run server tests using mysql
 	@echo Starting docker container for mysql
 	docker-compose -f ./docker-testing/docker-compose-mysql.yml down -v --remove-orphans
 	docker-compose -f ./docker-testing/docker-compose-mysql.yml run start_dependencies
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -count=1 -timeout=30m ./...
+	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-mysql-profile.coverage -count=1 -timeout=30m ./...
+	cd server; go tool cover -func server-mysql-profile.coverage
+	cd mattermost-plugin/server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-mysql-profile.coverage -count=1 -timeout=30m ./...
+	cd mattermost-plugin/server; go tool cover -func plugin-mysql-profile.coverage
 	docker-compose -f ./docker-testing/docker-compose-mysql.yml down -v --remove-orphans
 
 server-test-postgres: export FB_UNIT_TESTING=1
@@ -137,7 +148,10 @@ server-test-postgres: templates-archive ## Run server tests using postgres
 	@echo Starting docker container for postgres
 	docker-compose -f ./docker-testing/docker-compose-postgres.yml down -v --remove-orphans
 	docker-compose -f ./docker-testing/docker-compose-postgres.yml run start_dependencies
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -count=1 -timeout=30m ./...
+	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-postgres-profile.coverage -count=1 -timeout=30m ./...
+	cd server; go tool cover -func server-postgres-profile.coverage
+	cd mattermost-plugin/server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-postgres-profile.coverage -count=1 -timeout=30m ./...
+	cd mattermost-plugin/server; go tool cover -func plugin-postgres-profile.coverage
 	docker-compose -f ./docker-testing/docker-compose-postgres.yml down -v --remove-orphans
 
 webapp: ## Build webapp.
@@ -162,7 +176,8 @@ mac-app: server-mac webapp ## Build Mac application.
 	cp app-config.json mac/resources/config.json
 	cp -R webapp/pack mac/resources/pack
 	mkdir -p mac/temp
-	xcodebuild archive -workspace mac/Focalboard.xcworkspace -scheme Focalboard -archivePath mac/temp/focalboard.xcarchive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED="NO" CODE_SIGNING_ALLOWED="NO"
+	xcodebuild archive -workspace mac/Focalboard.xcworkspace -scheme Focalboard -archivePath mac/temp/focalboard.xcarchive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED="NO" CODE_SIGNING_ALLOWED="NO" \
+		|| { echo "xcodebuild failed, did you install the full Xcode and not just the CLI tools?"; exit 1; }
 	mkdir -p mac/dist
 	cp -R mac/temp/focalboard.xcarchive/Products/Applications/Focalboard.app mac/dist/
 	# xcodebuild -exportArchive -archivePath mac/temp/focalboard.xcarchive -exportPath mac/dist -exportOptionsPlist mac/export.plist

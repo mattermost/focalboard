@@ -3,11 +3,10 @@
 package store
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/mattermost/focalboard/server/model"
+
 	mmModel "github.com/mattermost/mattermost-server/v6/model"
 )
 
@@ -18,7 +17,6 @@ type Store interface {
 	GetBlocksWithBoardID(boardID string) ([]model.Block, error)
 	GetBlocksWithType(boardID, blockType string) ([]model.Block, error)
 	GetSubTree2(boardID, blockID string, opts model.QuerySubtreeOptions) ([]model.Block, error)
-	GetSubTree3(boardID, blockID string, opts model.QuerySubtreeOptions) ([]model.Block, error)
 	GetBlocksForBoard(boardID string) ([]model.Block, error)
 	// @withTransaction
 	InsertBlock(block *model.Block, userID string) error
@@ -28,13 +26,15 @@ type Store interface {
 	InsertBlocks(blocks []model.Block, userID string) error
 	// @withTransaction
 	UndeleteBlock(blockID string, modifiedBy string) error
+	// @withTransaction
+	UndeleteBoard(boardID string, modifiedBy string) error
 	GetBlockCountsByType() (map[string]int64, error)
 	GetBlock(blockID string) (*model.Block, error)
 	// @withTransaction
 	PatchBlock(blockID string, blockPatch *model.BlockPatch, userID string) error
 	GetBlockHistory(blockID string, opts model.QueryBlockHistoryOptions) ([]model.Block, error)
 	GetBlockHistoryDescendants(boardID string, opts model.QueryBlockHistoryOptions) ([]model.Block, error)
-	GetBoardHistory(boardID string, opts model.QueryBlockHistoryOptions) ([]*model.Board, error)
+	GetBoardHistory(boardID string, opts model.QueryBoardHistoryOptions) ([]*model.Board, error)
 	GetBoardAndCardByID(blockID string) (board *model.Board, card *model.Block, err error)
 	GetBoardAndCard(block *model.Block) (board *model.Board, card *model.Block, err error)
 	// @withTransaction
@@ -96,7 +96,7 @@ type Store interface {
 	GetBoardMemberHistory(boardID, userID string, limit uint64) ([]*model.BoardMemberHistoryEntry, error)
 	GetMembersForBoard(boardID string) ([]*model.BoardMember, error)
 	GetMembersForUser(userID string) ([]*model.BoardMember, error)
-	SearchBoardsForUserAndTeam(term, userID, teamID string) ([]*model.Board, error)
+	SearchBoardsForUser(term, userID string) ([]*model.Board, error)
 
 	// @withTransaction
 	CreateBoardsAndBlocksWithAdmin(bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, []*model.BoardMember, error)
@@ -112,8 +112,10 @@ type Store interface {
 	UpdateCategory(category model.Category) error
 	DeleteCategory(categoryID, userID, teamID string) error
 
-	GetUserCategoryBlocks(userID, teamID string) ([]model.CategoryBlocks, error)
-	AddUpdateCategoryBlock(userID, categoryID, blockID string) error
+	GetUserCategoryBoards(userID, teamID string) ([]model.CategoryBoards, error)
+
+	// @withTransaction
+	AddUpdateCategoryBoard(userID, categoryID, blockID string) error
 
 	CreateSubscription(sub *model.Subscription) (*model.Subscription, error)
 	DeleteSubscription(blockID string, subscriberID string) error
@@ -131,35 +133,10 @@ type Store interface {
 	RemoveDefaultTemplates(boards []*model.Board) error
 	GetTemplateBoards(teamID, userID string) ([]*model.Board, error)
 
+	// @withTransaction
+	RunDataRetention(globalRetentionDate int64, batchSize int64) (int64, error)
+
 	DBType() string
 
-	IsErrNotFound(err error) bool
-
 	GetLicense() *mmModel.License
-}
-
-// ErrNotFound is an error type that can be returned by store APIs when a query unexpectedly fetches no records.
-type ErrNotFound struct {
-	resource string
-}
-
-// NewErrNotFound creates a new ErrNotFound instance.
-func NewErrNotFound(resource string) *ErrNotFound {
-	return &ErrNotFound{
-		resource: resource,
-	}
-}
-
-func (nf *ErrNotFound) Error() string {
-	return fmt.Sprintf("{%s} not found", nf.resource)
-}
-
-// IsErrNotFound returns true if `err` is or wraps a ErrNotFound.
-func IsErrNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	var nf *ErrNotFound
-	return errors.As(err, &nf)
 }

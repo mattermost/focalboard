@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	blockChangeNotifierQueueSize       = 100
+	blockChangeNotifierQueueSize       = 1000
 	blockChangeNotifierPoolSize        = 10
 	blockChangeNotifierShutdownTimeout = time.Second * 10
 )
@@ -51,6 +51,10 @@ type App struct {
 
 func (a *App) SetConfig(config *config.Configuration) {
 	a.config = config
+}
+
+func (a *App) GetConfig() *config.Configuration {
+	return a.config
 }
 
 func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) *App {
