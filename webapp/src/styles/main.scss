@@ -1,5 +1,6 @@
 @import 'typography';
 @import 'modifiers';
+@import 'z-index';
 
 html {
     height: 100%;
@@ -54,7 +55,7 @@ html {
     textarea {
         background: rgb(var(--center-channel-bg-rgb));
         color: rgb(var(--center-channel-color-rgb));
-
+        border-radius: 4px;
         user-select: text;
     }
 
@@ -209,8 +210,8 @@ html {
         width: 100%;
 
         &:hover {
+            @include z-index(block-hover);
             position: relative;
-            z-index: 1;
         }
 
         > * {

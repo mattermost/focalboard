@@ -10,11 +10,17 @@ import {createBoard, Board} from '../../../../webapp/src/blocks/board'
 import {useAppSelector} from '../../../../webapp/src/store/hooks'
 import IconButton from '../../../../webapp/src/widgets/buttons/iconButton'
 import OptionsIcon from '../../../../webapp/src/widgets/icons/options'
-import DeleteIcon from '../../../../webapp/src/widgets/icons/delete'
 import Menu from '../../../../webapp/src/widgets/menu'
 import MenuWrapper from '../../../../webapp/src/widgets/menuWrapper'
+import {SuiteWindow} from '../../../../webapp/src/types/index'
+import CompassIcon from '../../../../webapp/src/widgets/icons/compassIcon'
+
+import {Permission} from '../../../../webapp/src/constants'
 
 import './rhsChannelBoardItem.scss'
+import BoardPermissionGate from '../../../../webapp/src/components/permissions/boardPermissionGate'
+
+const windowAny = (window as SuiteWindow)
 
 type Props = {
     board: Board
@@ -30,8 +36,7 @@ const RHSChannelBoardItem = (props: Props) => {
     }
 
     const handleBoardClicked = (boardID: string) => {
-        const windowAny: any = window
-        windowAny.WebappUtils.browserHistory.push(`/boards/team/${team.id}/${boardID}`)
+        window.open(`${windowAny.frontendBaseURL}/team/${team.id}/${boardID}`, '_blank', 'noopener')
     }
 
     const onUnlinkBoard = async (board: Board) => {
@@ -42,6 +47,7 @@ const RHSChannelBoardItem = (props: Props) => {
 
     const untitledBoardTitle = intl.formatMessage({id: 'ViewTitle.untitled-board', defaultMessage: 'Untitled board'})
 
+    const markdownHtml = Utils.htmlFromMarkdown(board.description)
     return (
         <div
             onClick={() => handleBoardClicked(board.id)}
@@ -53,22 +59,47 @@ const RHSChannelBoardItem = (props: Props) => {
                 <MenuWrapper stopPropagationOnToggle={true}>
                     <IconButton icon={<OptionsIcon/>}/>
                     <Menu
-                        fixed={true}
                         position='left'
                     >
-                        <Menu.Text
-                            key={`unlinkBoard-${board.id}`}
-                            id='unlinkBoard'
-                            name={intl.formatMessage({id: 'rhs-boards.unlink-board', defaultMessage: 'Unlink board'})}
-                            icon={<DeleteIcon/>}
-                            onClick={() => {
-                                onUnlinkBoard(board)
-                            }}
-                        />
+                        <BoardPermissionGate
+                            boardId={board.id}
+                            teamId={team.id}
+                            permissions={[Permission.ManageBoardRoles]}
+                        >
+                            <Menu.Text
+                                key={`unlinkBoard-${board.id}`}
+                                id='unlinkBoard'
+                                name={intl.formatMessage({id: 'rhs-boards.unlink-board', defaultMessage: 'Unlink board'})}
+                                icon={<CompassIcon icon='link-variant-off'/>}
+                                onClick={() => {
+                                    onUnlinkBoard(board)
+                                }}
+                            />
+                        </BoardPermissionGate>
+                        <BoardPermissionGate
+                            boardId={board.id}
+                            teamId={team.id}
+                            permissions={[Permission.ManageBoardRoles]}
+                            invert={true}
+                        >
+                            <Menu.Text
+                                key={`unlinkBoard-${board.id}`}
+                                id='unlinkBoard'
+                                disabled={true}
+                                name={intl.formatMessage({id: 'rhs-boards.unlink-board1', defaultMessage: 'Unlink board'})}
+                                icon={<CompassIcon icon='link-variant-off'/>}
+                                onClick={() => {
+                                    onUnlinkBoard(board)
+                                }}
+                                subText={intl.formatMessage({id: 'rhs-board-non-admin-msg', defaultMessage:'You are not an admin of the board'})}
+                            />
+                        </BoardPermissionGate>
                     </Menu>
                 </MenuWrapper>
             </div>
-            <div>{board.description}</div>
+            <div className='description'
+                dangerouslySetInnerHTML={{__html: markdownHtml}}
+            />
             <div className='date'>
                 <FormattedMessage
                     id='rhs-boards.last-update-at'

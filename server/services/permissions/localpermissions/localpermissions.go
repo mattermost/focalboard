@@ -13,14 +13,18 @@ import (
 
 type Service struct {
 	store  permissions.Store
-	logger *mlog.Logger
+	logger mlog.LoggerIFace
 }
 
-func New(store permissions.Store, logger *mlog.Logger) *Service {
+func New(store permissions.Store, logger mlog.LoggerIFace) *Service {
 	return &Service{
 		store:  store,
 		logger: logger,
 	}
+}
+
+func (s *Service) HasPermissionTo(userID string, permission *mmModel.Permission) bool {
+	return false
 }
 
 func (s *Service) HasPermissionToTeam(userID, teamID string, permission *mmModel.Permission) bool {
@@ -67,10 +71,12 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 	}
 
 	switch permission {
-	case model.PermissionManageBoardType, model.PermissionDeleteBoard, model.PermissionManageBoardRoles, model.PermissionShareBoard:
+	case model.PermissionManageBoardType, model.PermissionDeleteBoard, model.PermissionManageBoardRoles, model.PermissionShareBoard, model.PermissionDeleteOthersComments:
 		return member.SchemeAdmin
 	case model.PermissionManageBoardCards, model.PermissionManageBoardProperties:
 		return member.SchemeAdmin || member.SchemeEditor
+	case model.PermissionCommentBoardCards:
+		return member.SchemeAdmin || member.SchemeEditor || member.SchemeCommenter
 	case model.PermissionViewBoard:
 		return member.SchemeAdmin || member.SchemeEditor || member.SchemeCommenter || member.SchemeViewer
 	default:

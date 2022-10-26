@@ -53,7 +53,7 @@ type Server struct {
 	store                  store.Store
 	filesBackend           filestore.FileBackend
 	telemetry              *telemetry.Service
-	logger                 *mlog.Logger
+	logger                 mlog.LoggerIFace
 	cleanUpSessionsTask    *scheduler.ScheduledTask
 	metricsServer          *metrics.Service
 	metricsService         *metrics.Metrics
@@ -94,6 +94,7 @@ func New(params Params) (*Server, error) {
 	filesBackendSettings.AmazonS3SignV2 = params.Cfg.FilesS3Config.SignV2
 	filesBackendSettings.AmazonS3SSE = params.Cfg.FilesS3Config.SSE
 	filesBackendSettings.AmazonS3Trace = params.Cfg.FilesS3Config.Trace
+	filesBackendSettings.AmazonS3RequestTimeoutMilliseconds = params.Cfg.FilesS3Config.Timeout
 
 	filesBackend, appErr := filestore.NewFileBackend(filesBackendSettings)
 	if appErr != nil {
@@ -137,7 +138,7 @@ func New(params Params) (*Server, error) {
 		Notifications:    notificationService,
 		Logger:           params.Logger,
 		Permissions:      params.PermissionsService,
-		PluginAPI:        params.PluginAPI,
+		ServicesAPI:      params.ServicesAPI,
 		SkipTemplateInit: utils.IsRunningUnitTests(),
 	}
 	app := app.New(params.Cfg, wsAdapter, appServices)
@@ -207,7 +208,7 @@ func New(params Params) (*Server, error) {
 	return &server, nil
 }
 
-func NewStore(config *config.Configuration, isSingleUser bool, logger *mlog.Logger) (store.Store, error) {
+func NewStore(config *config.Configuration, isSingleUser bool, logger mlog.LoggerIFace) (store.Store, error) {
 	sqlDB, err := sql.Open(config.DBType, config.DBConfigString)
 	if err != nil {
 		logger.Error("connectDatabase failed", mlog.Err(err))
@@ -275,6 +276,13 @@ func (s *Server) Start() error {
 		for blockType, count := range blockCounts {
 			s.metricsService.ObserveBlockCount(blockType, count)
 		}
+		boardCount, err := s.store.GetBoardCount()
+		if err != nil {
+			s.logger.Error("Error updating metrics", mlog.String("group", "boards"), mlog.Err(err))
+			return
+		}
+		s.logger.Log(mlog.LvlFBMetrics, "Board metrics collected", mlog.Int64("board_count", boardCount))
+		s.metricsService.ObserveBoardCount(boardCount)
 		teamCount, err := s.store.GetTeamCount()
 		if err != nil {
 			s.logger.Error("Error updating metrics", mlog.String("group", "teams"), mlog.Err(err))
@@ -350,7 +358,7 @@ func (s *Server) Config() *config.Configuration {
 	return s.config
 }
 
-func (s *Server) Logger() *mlog.Logger {
+func (s *Server) Logger() mlog.LoggerIFace {
 	return s.logger
 }
 
@@ -418,7 +426,7 @@ type telemetryOptions struct {
 	cfg         *config.Configuration
 	telemetryID string
 	serverID    string
-	logger      *mlog.Logger
+	logger      mlog.LoggerIFace
 	singleUser  bool
 }
 
@@ -481,6 +489,16 @@ func initTelemetry(opts telemetryOptions) *telemetry.Service {
 		}
 		return m, nil
 	})
+	telemetryService.RegisterTracker("boards", func() (telemetry.Tracker, error) {
+		boardCount, err := opts.app.GetBoardCount()
+		if err != nil {
+			return nil, err
+		}
+		m := map[string]interface{}{
+			"boards": boardCount,
+		}
+		return m, nil
+	})
 	telemetryService.RegisterTracker("teams", func() (telemetry.Tracker, error) {
 		count, err := opts.app.GetTeamCount()
 		if err != nil {
@@ -494,7 +512,7 @@ func initTelemetry(opts telemetryOptions) *telemetry.Service {
 	return telemetryService
 }
 
-func initNotificationService(backends []notify.Backend, logger *mlog.Logger) (*notify.Service, error) {
+func initNotificationService(backends []notify.Backend, logger mlog.LoggerIFace) (*notify.Service, error) {
 	loggerBackend := notifylogger.New(logger, mlog.LvlDebug)
 
 	backends = append(backends, loggerBackend)

@@ -22,6 +22,7 @@ type AmazonS3Config struct {
 	SignV2          bool
 	SSE             bool
 	Trace           bool
+	Timeout         int64
 }
 
 // Configuration is the app configuration stored in a json file.
@@ -52,6 +53,7 @@ type Configuration struct {
 	FeatureFlags             map[string]string `json:"featureFlags" mapstructure:"featureFlags"`
 	EnableDataRetention      bool              `json:"enable_data_retention" mapstructure:"enable_data_retention"`
 	DataRetentionDays        int               `json:"data_retention_days" mapstructure:"data_retention_days"`
+	TeammateNameDisplay      string            `json:"teammate_name_display" mapstructure:"teammateNameDisplay"`
 
 	AuthMode string `json:"authMode" mapstructure:"authMode"`
 
@@ -100,6 +102,7 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	viper.SetDefault("EnableDataRetention", false)
 	viper.SetDefault("DataRetentionDays", 365) // 1 year is default
 	viper.SetDefault("PrometheusAddress", "")
+	viper.SetDefault("TeammateNameDisplay", "username")
 
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file

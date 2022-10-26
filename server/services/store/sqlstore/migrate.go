@@ -10,9 +10,8 @@ import (
 
 	"text/template"
 
-	"github.com/mattermost/morph/models"
-
 	"github.com/mattermost/mattermost-server/v6/shared/mlog"
+	"github.com/mattermost/mattermost-server/v6/store/sqlstore"
 
 	"github.com/mattermost/morph"
 	drivers "github.com/mattermost/morph/drivers"
@@ -21,51 +20,23 @@ import (
 	sqlite "github.com/mattermost/morph/drivers/sqlite"
 	embedded "github.com/mattermost/morph/sources/embedded"
 
-	mysqldriver "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq" // postgres driver
 
-	sq "github.com/Masterminds/squirrel"
-
 	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/mattermost-plugin-api/cluster"
 )
 
 //go:embed migrations
-var assets embed.FS
+var Assets embed.FS
 
 const (
 	uniqueIDsMigrationRequiredVersion        = 14
-	teamsAndBoardsMigrationRequiredVersion   = 18
+	teamLessBoardsMigrationRequiredVersion   = 18
 	categoriesUUIDIDMigrationRequiredVersion = 20
 
 	tempSchemaMigrationTableName = "temp_schema_migration"
 )
 
 var errChannelCreatorNotInTeam = errors.New("channel creator not found in user teams")
-
-func appendMultipleStatementsFlag(connectionString string) (string, error) {
-	config, err := mysqldriver.ParseDSN(connectionString)
-	if err != nil {
-		return "", err
-	}
-
-	if config.Params == nil {
-		config.Params = map[string]string{}
-	}
-
-	config.Params["multiStatements"] = "true"
-	return config.FormatDSN(), nil
-}
-
-// resetReadTimeout removes the timeout contraint from the MySQL dsn.
-func resetReadTimeout(dataSource string) (string, error) {
-	config, err := mysqldriver.ParseDSN(dataSource)
-	if err != nil {
-		return "", err
-	}
-	config.ReadTimeout = 0
-	return config.FormatDSN(), nil
-}
 
 // migrations in MySQL need to run with the multiStatements flag
 // enabled, so this method creates a new connection ensuring that it's
@@ -74,12 +45,12 @@ func (s *SQLStore) getMigrationConnection() (*sql.DB, error) {
 	connectionString := s.connectionString
 	if s.dbType == model.MysqlDBType {
 		var err error
-		connectionString, err = resetReadTimeout(connectionString)
+		connectionString, err = sqlstore.ResetReadTimeout(connectionString)
 		if err != nil {
 			return nil, err
 		}
 
-		connectionString, err = appendMultipleStatementsFlag(connectionString)
+		connectionString, err = sqlstore.AppendMultipleStatementsFlag(connectionString)
 		if err != nil {
 			return nil, err
 		}
@@ -98,6 +69,32 @@ func (s *SQLStore) getMigrationConnection() (*sql.DB, error) {
 }
 
 func (s *SQLStore) Migrate() error {
+	if s.isPlugin {
+		mutex, mutexErr := s.NewMutexFn("Boards_dbMutex")
+		if mutexErr != nil {
+			return fmt.Errorf("error creating database mutex: %w", mutexErr)
+		}
+
+		s.logger.Debug("Acquiring cluster lock for Focalboard migrations")
+		mutex.Lock()
+		defer func() {
+			s.logger.Debug("Releasing cluster lock for Focalboard migrations")
+			mutex.Unlock()
+		}()
+	}
+
+	if err := s.EnsureSchemaMigrationFormat(); err != nil {
+		return err
+	}
+	defer func() {
+		// the old schema migration table deletion happens after the
+		// migrations have run, to be able to recover its information
+		// in case there would be errors during the process.
+		if err := s.deleteOldSchemaMigrationTable(); err != nil {
+			s.logger.Error("cannot delete the old schema migration table", mlog.Err(err))
+		}
+	}()
+
 	var driver drivers.Driver
 	var err error
 
@@ -115,12 +112,16 @@ func (s *SQLStore) Migrate() error {
 
 	var db *sql.DB
 	if s.dbType != model.SqliteDBType {
+		s.logger.Debug("Getting migrations connection")
 		db, err = s.getMigrationConnection()
 		if err != nil {
 			return err
 		}
 
-		defer db.Close()
+		defer func() {
+			s.logger.Debug("Closing migrations connection")
+			db.Close()
+		}()
 	}
 
 	if s.dbType == model.PostgresDBType {
@@ -137,7 +138,7 @@ func (s *SQLStore) Migrate() error {
 		}
 	}
 
-	assetsList, err := assets.ReadDir("migrations")
+	assetsList, err := Assets.ReadDir("migrations")
 	if err != nil {
 		return err
 	}
@@ -158,7 +159,7 @@ func (s *SQLStore) Migrate() error {
 	migrationAssets := &embedded.AssetSource{
 		Names: assetNamesForDriver,
 		AssetFunc: func(name string) ([]byte, error) {
-			asset, mErr := assets.ReadFile("migrations/" + name)
+			asset, mErr := Assets.ReadFile("migrations/" + name)
 			if mErr != nil {
 				return nil, mErr
 			}
@@ -184,293 +185,98 @@ func (s *SQLStore) Migrate() error {
 	}
 
 	opts := []morph.EngineOption{
-		morph.WithLock("mm-lock-key"),
+		morph.WithLock("boards-lock-key"),
 	}
 
 	if s.dbType == model.SqliteDBType {
 		opts = opts[:0] // sqlite driver does not support locking, it doesn't need to anyway.
 	}
 
+	s.logger.Debug("Creating migration engine")
 	engine, err := morph.New(context.Background(), driver, src, opts...)
 	if err != nil {
 		return err
 	}
-	defer engine.Close()
+	defer func() {
+		s.logger.Debug("Closing migration engine")
+		engine.Close()
+	}()
 
-	var mutex *cluster.Mutex
-	if s.isPlugin {
-		var mutexErr error
-		mutex, mutexErr = s.NewMutexFn("Boards_dbMutex")
-		if mutexErr != nil {
-			return fmt.Errorf("error creating database mutex: %w", mutexErr)
-		}
-
-		s.logger.Debug("Acquiring cluster lock for Unique IDs migration")
-		mutex.Lock()
-		defer func() {
-			s.logger.Debug("Releasing cluster lock for Unique IDs migration")
-			mutex.Unlock()
-		}()
-	}
-
-	if err := s.migrateSchemaVersionTable(src.Migrations()); err != nil {
-		return err
-	}
-
-	if err := ensureMigrationsAppliedUpToVersion(engine, driver, uniqueIDsMigrationRequiredVersion); err != nil {
-		return err
-	}
-
-	if err := s.runUniqueIDsMigration(); err != nil {
-		return fmt.Errorf("error running unique IDs migration: %w", err)
-	}
-
-	if err := ensureMigrationsAppliedUpToVersion(engine, driver, categoriesUUIDIDMigrationRequiredVersion); err != nil {
-		return err
-	}
-
-	if err := s.runCategoryUUIDIDMigration(); err != nil {
-		return fmt.Errorf("error running categoryID migration: %w", err)
-	}
-
-	if err := s.deleteOldSchemaMigrationTable(); err != nil {
-		return err
-	}
-
-	if err := ensureMigrationsAppliedUpToVersion(engine, driver, teamsAndBoardsMigrationRequiredVersion); err != nil {
-		return err
-	}
-
-	if err := s.migrateTeamLessBoards(); err != nil {
-		return err
-	}
-
-	return engine.ApplyAll()
+	return s.runMigrationSequence(engine, driver)
 }
 
-// migrateSchemaVersionTable converts the schema version table from
-// the old format used by go-migrate to the new format used by
-// gomorph.
-// When running the Focalboard with go-migrate's schema version table
-// existing in the database, gomorph is unable to make sense of it as it's
-// not in the format required by gomorph.
-func (s *SQLStore) migrateSchemaVersionTable(migrations []*models.Migration) error {
-	migrationNeeded, err := s.isSchemaMigrationNeeded()
+// runMigrationSequence executes all the migrations in order, both
+// plain SQL and data migrations.
+func (s *SQLStore) runMigrationSequence(engine *morph.Morph, driver drivers.Driver) error {
+	if mErr := s.ensureMigrationsAppliedUpToVersion(engine, driver, uniqueIDsMigrationRequiredVersion); mErr != nil {
+		return mErr
+	}
+
+	if mErr := s.RunUniqueIDsMigration(); mErr != nil {
+		return fmt.Errorf("error running unique IDs migration: %w", mErr)
+	}
+
+	if mErr := s.ensureMigrationsAppliedUpToVersion(engine, driver, teamLessBoardsMigrationRequiredVersion); mErr != nil {
+		return mErr
+	}
+
+	if mErr := s.RunTeamLessBoardsMigration(); mErr != nil {
+		return fmt.Errorf("error running teamless boards migration: %w", mErr)
+	}
+
+	if mErr := s.RunDeletedMembershipBoardsMigration(); mErr != nil {
+		return fmt.Errorf("error running deleted membership boards migration: %w", mErr)
+	}
+
+	if mErr := s.ensureMigrationsAppliedUpToVersion(engine, driver, categoriesUUIDIDMigrationRequiredVersion); mErr != nil {
+		return mErr
+	}
+
+	if mErr := s.RunCategoryUUIDIDMigration(); mErr != nil {
+		return fmt.Errorf("error running categoryID migration: %w", mErr)
+	}
+
+	appliedMigrations, err := driver.AppliedMigrations()
 	if err != nil {
 		return err
 	}
 
-	if !migrationNeeded {
-		return nil
-	}
+	s.logger.Debug("== Applying all remaining migrations ====================",
+		mlog.Int("current_version", len(appliedMigrations)),
+	)
 
-	s.logger.Info("Migrating schema migration to new format")
-
-	legacySchemaVersion, err := s.getLegacySchemaVersion()
-	if err != nil {
+	if err := engine.ApplyAll(); err != nil {
 		return err
 	}
 
-	if err := s.createTempSchemaTable(); err != nil {
-		return err
+	// always run the collations & charset fix-ups
+	if mErr := s.RunFixCollationsAndCharsetsMigration(); mErr != nil {
+		return fmt.Errorf("error running fix collations and charsets migration: %w", mErr)
 	}
-
-	if err := s.populateTempSchemaTable(migrations, legacySchemaVersion); err != nil {
-		return err
-	}
-
-	if err := s.useNewSchemaTable(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func (s *SQLStore) isSchemaMigrationNeeded() (bool, error) {
-	// Check if `dirty` column exists on schema version table.
-	// This column exists only for the old schema version table.
-
-	// SQLite needs a bit of a special handling
-	if s.dbType == model.SqliteDBType {
-		return s.isSchemaMigrationNeededSQLite()
-	}
-
-	query := s.getQueryBuilder(s.db).
-		Select("count(*)").
-		From("information_schema.COLUMNS").
-		Where(sq.Eq{
-			"TABLE_NAME":  s.tablePrefix + "schema_migrations",
-			"COLUMN_NAME": "dirty",
-		})
-
-	row := query.QueryRow()
-
-	var count int
-	if err := row.Scan(&count); err != nil {
-		s.logger.Error("failed to check for columns of schema_migrations table", mlog.Err(err))
-		return false, err
-	}
-
-	return count == 1, nil
-}
-
-func (s *SQLStore) isSchemaMigrationNeededSQLite() (bool, error) {
-	// the way to check presence of a column is different
-	// for SQLite. Hence, the separate function
-
-	query := fmt.Sprintf("PRAGMA table_info(\"%sschema_migrations\");", s.tablePrefix)
-	rows, err := s.db.Query(query)
-	if err != nil {
-		s.logger.Error("SQLite - failed to check for columns in schema_migrations table", mlog.Err(err))
-		return false, err
-	}
-
-	defer s.CloseRows(rows)
-
-	data := [][]*string{}
-	for rows.Next() {
-		// PRAGMA returns 6 columns
-		row := make([]*string, 6)
-
-		err := rows.Scan(
-			&row[0],
-			&row[1],
-			&row[2],
-			&row[3],
-			&row[4],
-			&row[5],
-		)
-		if err != nil {
-			s.logger.Error("error scanning rows from SQLite schema_migrations table definition", mlog.Err(err))
-			return false, err
-		}
-
-		data = append(data, row)
-	}
-
-	nameColumnFound := false
-	for _, row := range data {
-		if len(row) >= 2 && *row[1] == "dirty" {
-			nameColumnFound = true
-			break
-		}
-	}
-
-	return nameColumnFound, nil
-}
-
-func (s *SQLStore) getLegacySchemaVersion() (uint32, error) {
-	query := s.getQueryBuilder(s.db).
-		Select("version").
-		From(s.tablePrefix + "schema_migrations")
-
-	row := query.QueryRow()
-
-	var version uint32
-	if err := row.Scan(&version); err != nil {
-		s.logger.Error("error fetching legacy schema version", mlog.Err(err))
-		s.logger.Error("getLegacySchemaVersion err " + err.Error())
-		return version, err
-	}
-
-	return version, nil
-}
-
-func (s *SQLStore) createTempSchemaTable() error {
-	// squirrel doesn't support DDL query in query builder
-	// so, we need to use a plain old string
-	query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (Version bigint NOT NULL, Name varchar(64) NOT NULL, PRIMARY KEY (Version))", s.tablePrefix+tempSchemaMigrationTableName)
-	if _, err := s.db.Exec(query); err != nil {
-		s.logger.Error("failed to create temporary schema migration table", mlog.Err(err))
-		s.logger.Error("createTempSchemaTable error  " + err.Error())
-		return err
-	}
-
-	return nil
-}
-func (s *SQLStore) populateTempSchemaTable(migrations []*models.Migration, legacySchemaVersion uint32) error {
-	query := s.getQueryBuilder(s.db).
-		Insert(s.tablePrefix+tempSchemaMigrationTableName).
-		Columns("Version", "Name")
-
-	for _, migration := range migrations {
-		// migrations param contains both up and down variant for
-		// each migration. Skipping for either one (down in this case)
-		// to process a migration only a single time.
-		if migration.Direction == models.Down {
-			continue
-		}
-
-		if migration.Version > legacySchemaVersion {
-			break
-		}
-
-		query = query.Values(migration.Version, migration.Name)
-	}
-
-	if _, err := query.Exec(); err != nil {
-		s.logger.Error("failed to insert migration records into temporary schema table", mlog.Err(err))
-		return err
-	}
-
-	return nil
-}
-
-func (s *SQLStore) useNewSchemaTable() error {
-	// first delete the old table, then
-	// rename the new table to old table's name
-
-	// renaming old schema migration table. Will delete later once the migration is
-	// complete, just in case.
-	var query string
-	if s.dbType == model.MysqlDBType {
-		query = fmt.Sprintf("RENAME TABLE `%sschema_migrations` TO `%sschema_migrations_old_temp`", s.tablePrefix, s.tablePrefix)
-	} else {
-		query = fmt.Sprintf("ALTER TABLE %sschema_migrations RENAME TO %sschema_migrations_old_temp", s.tablePrefix, s.tablePrefix)
-	}
-
-	if _, err := s.db.Exec(query); err != nil {
-		s.logger.Error("failed to rename old schema migration table", mlog.Err(err))
-		return err
-	}
-
-	// renaming new temp table to old table's name
-	if s.dbType == model.MysqlDBType {
-		query = fmt.Sprintf("RENAME TABLE `%s%s` TO `%sschema_migrations`", s.tablePrefix, tempSchemaMigrationTableName, s.tablePrefix)
-	} else {
-		query = fmt.Sprintf("ALTER TABLE %s%s RENAME TO %sschema_migrations", s.tablePrefix, tempSchemaMigrationTableName, s.tablePrefix)
-	}
-
-	if _, err := s.db.Exec(query); err != nil {
-		s.logger.Error("failed to rename temp schema table", mlog.Err(err))
-		return err
-	}
-
-	return nil
-}
-
-func (s *SQLStore) deleteOldSchemaMigrationTable() error {
-	query := "DROP TABLE IF EXISTS " + s.tablePrefix + "schema_migrations_old_temp"
-	if _, err := s.db.Exec(query); err != nil {
-		s.logger.Error("failed to delete old temp schema migrations table", mlog.Err(err))
-		return err
-	}
-
-	return nil
-}
-
-func ensureMigrationsAppliedUpToVersion(engine *morph.Morph, driver drivers.Driver, version int) error {
+func (s *SQLStore) ensureMigrationsAppliedUpToVersion(engine *morph.Morph, driver drivers.Driver, version int) error {
 	applied, err := driver.AppliedMigrations()
 	if err != nil {
 		return err
 	}
 	currentVersion := len(applied)
 
+	s.logger.Debug("== Ensuring migrations applied up to version ====================",
+		mlog.Int("version", version),
+		mlog.Int("current_version", currentVersion))
+
 	// if the target version is below or equal to the current one, do
 	// not migrate either because is not needed (both are equal) or
 	// because it would downgrade the database (is below)
 	if version <= currentVersion {
+		s.logger.Debug("-- There is no need of applying any migration --------------------")
 		return nil
+	}
+
+	for _, migration := range applied {
+		s.logger.Debug("-- Found applied migration --------------------", mlog.Uint32("version", migration.Version), mlog.String("name", migration.Name))
 	}
 
 	if _, err = engine.Apply(version - currentVersion); err != nil {

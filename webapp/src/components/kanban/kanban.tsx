@@ -1,10 +1,12 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 /* eslint-disable max-lines */
-import React, {useCallback, useState, useMemo} from 'react'
+import React, {useCallback, useState, useMemo, useEffect} from 'react'
 import {FormattedMessage, injectIntl, IntlShape} from 'react-intl'
 
 import withScrolling, {createHorizontalStrength, createVerticalStrength} from 'react-dnd-scrolling'
+
+import {useAppSelector} from '../../store/hooks'
 
 import {Position} from '../cardDetail/cardDetailContents'
 
@@ -18,6 +20,7 @@ import {Constants, Permission} from '../../constants'
 
 import {dragAndDropRearrange} from '../cardDetail/cardDetailContentsUtility'
 
+import {getCurrentBoardTemplates} from '../../store/cards'
 import BoardPermissionGate from '../permissions/boardPermissionGate'
 import HiddenCardCount from '../../components/hiddenCardCount/hiddenCardCount'
 
@@ -39,7 +42,8 @@ type Props = {
     intl: IntlShape
     readonly: boolean
     onCardClicked: (e: React.MouseEvent, card: Card) => void
-    addCard: (groupByOptionId?: string, show?:boolean) => Promise<void>
+    addCard: (groupByOptionId?: string, show?: boolean) => Promise<void>
+    addCardFromTemplate: (cardTemplateId: string, groupByOptionId?: string) => void
     showCard: (cardId?: string) => void
     hiddenCardsCount: number
     showHiddenCardCountNotification: (show: boolean) => void
@@ -50,14 +54,19 @@ const hStrength = createHorizontalStrength(Utils.isMobile() ? 60 : 250)
 const vStrength = createVerticalStrength(Utils.isMobile() ? 60 : 250)
 
 const Kanban = (props: Props) => {
+    const cardTemplates: Card[] = useAppSelector(getCurrentBoardTemplates)
     const {board, activeView, cards, groupByProperty, visibleGroups, hiddenGroups, hiddenCardsCount} = props
+    const [defaultTemplateID, setDefaultTemplateID] = useState<string>()
 
-    if (!groupByProperty) {
-        Utils.assertFailure('Board views must have groupByProperty set')
-        return <div/>
-    }
+    useEffect(() => {
+        if (activeView.fields.defaultTemplateId) {
+            if (cardTemplates.find((ct) => ct.id === activeView.fields.defaultTemplateId)) {
+                setDefaultTemplateID(activeView.fields.defaultTemplateId)
+            }
+        }
+    }, [activeView.fields.defaultTemplateId])
 
-    const propertyValues = groupByProperty.options || []
+    const propertyValues = groupByProperty?.options || []
     Utils.log(`${propertyValues.length} propertyValues`)
 
     const visiblePropertyTemplates = useMemo(() => {
@@ -154,7 +163,7 @@ const Kanban = (props: Props) => {
     }, [cards, visibleGroups, activeView.id, activeView.fields.cardOrder, groupByProperty, props.selectedCardIds])
 
     const onDropToCard = useCallback(async (srcCard: Card, dstCard: Card) => {
-        if (srcCard.id === dstCard.id) {
+        if (srcCard.id === dstCard.id || !groupByProperty) {
             return
         }
         Utils.log(`onDropToCard: ${dstCard.title}`)
@@ -201,6 +210,11 @@ const Kanban = (props: Props) => {
         const newShowOptions = new Map<string, boolean>(showCalculationsMenu)
         newShowOptions.set(templateId, show)
         setShowCalculationsMenu(newShowOptions)
+    }
+
+    if (!groupByProperty) {
+        Utils.assertFailure('Board views must have groupByProperty set')
+        return <div/>
     }
 
     return (
@@ -292,7 +306,11 @@ const Kanban = (props: Props) => {
                             <BoardPermissionGate permissions={[Permission.ManageBoardCards]}>
                                 <Button
                                     onClick={() => {
-                                        props.addCard(group.option.id, true)
+                                        if (defaultTemplateID) {
+                                            props.addCardFromTemplate(defaultTemplateID, group.option.id)
+                                        } else {
+                                            props.addCard(group.option.id, true)
+                                        }
                                     }}
                                 >
                                     <FormattedMessage
@@ -308,25 +326,25 @@ const Kanban = (props: Props) => {
                 {/* Hidden columns */}
 
                 {(hiddenGroups.length > 0 || hiddenCardsCount > 0) &&
-                <div className='octo-board-column narrow'>
-                    {hiddenGroups.map((group) => (
-                        <KanbanHiddenColumnItem
-                            key={group.option.id}
-                            group={group}
-                            activeView={activeView}
-                            intl={props.intl}
-                            readonly={props.readonly}
-                            onDrop={(card: Card) => onDropToColumn(group.option, card)}
-                        />
-                    ))}
-                    {hiddenCardsCount > 0 &&
-                    <div className='ml-1'>
-                        <HiddenCardCount
-                            hiddenCardsCount={hiddenCardsCount}
-                            showHiddenCardNotification={props.showHiddenCardCountNotification}
-                        />
+                    <div className='octo-board-column narrow'>
+                        {hiddenGroups.map((group) => (
+                            <KanbanHiddenColumnItem
+                                key={group.option.id}
+                                group={group}
+                                activeView={activeView}
+                                intl={props.intl}
+                                readonly={props.readonly}
+                                onDrop={(card: Card) => onDropToColumn(group.option, card)}
+                            />
+                        ))}
+                        {hiddenCardsCount > 0 &&
+                        <div className='ml-1'>
+                            <HiddenCardCount
+                                hiddenCardsCount={hiddenCardsCount}
+                                showHiddenCardNotification={props.showHiddenCardCountNotification}
+                            />
+                        </div>}
                     </div>}
-                </div>}
             </div>
         </ScrollingComponent>
     )

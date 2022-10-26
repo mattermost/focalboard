@@ -3,20 +3,33 @@
 
 import React from 'react'
 import {Provider as ReduxProvider} from 'react-redux'
-import {render, screen} from '@testing-library/react'
+import {act, render} from '@testing-library/react'
+import {mocked} from 'jest-mock'
+import thunk from 'redux-thunk'
 
-import {createBoard} from '../../../../webapp/src/blocks/board'
+import octoClient from '../../../../webapp/src/octoClient'
+import {BoardMember, createBoard} from '../../../../webapp/src/blocks/board'
 import {mockStateStore, wrapIntl} from '../../../../webapp/src/testUtils'
 
 import RHSChannelBoards from './rhsChannelBoards'
 
+jest.mock('../../../../webapp/src/octoClient')
+const mockedOctoClient = mocked(octoClient, true)
+
 describe('components/rhsChannelBoards', () => {
     const board1 = createBoard()
+    board1.updateAt = 1657311058157
     const board2 = createBoard()
     const board3 = createBoard()
+    board3.updateAt = 1657311058157
+
     board1.channelId = 'channel-id'
     board3.channelId = 'channel-id'
 
+    const boardMembership1 = {boardId: board1.id, userId: 'user-id'} as BoardMember
+    const boardMembership2 = {boardId: board2.id, userId: 'user-id'} as BoardMember
+    const boardMembership3 = {boardId: board3.id, userId: 'user-id'} as BoardMember
+    
     const team = {
         id: 'team-id',
         name: 'team',
@@ -26,6 +39,12 @@ describe('components/rhsChannelBoards', () => {
         teams: {
             allTeams: [team],
             current: team,
+            currentId: team.id,
+        },
+        users: {
+            me: {
+                id: 'user-id',
+            },
         },
         language: {
             value: 'en',
@@ -37,9 +56,9 @@ describe('components/rhsChannelBoards', () => {
                 [board3.id]: board3,
             },
             myBoardMemberships: {
-                [board1.id]: {boardId: board1.id, userId: 'user-id'},
-                [board2.id]: {boardId: board2.id, userId: 'user-id'},
-                [board3.id]: {boardId: board3.id, userId: 'user-id'},
+                [board1.id]: boardMembership1,
+                [board2.id]: boardMembership2,
+                [board3.id]: boardMembership3,
             },
         },
         channels: {
@@ -52,24 +71,42 @@ describe('components/rhsChannelBoards', () => {
         },
     }
 
+    beforeEach(() => {
+        mockedOctoClient.getBoards.mockResolvedValue([board1, board2, board3])
+        mockedOctoClient.getMyBoardMemberships.mockResolvedValue([boardMembership1, boardMembership2, boardMembership3])
+
+        jest.clearAllMocks()
+    })
+
     it('renders the RHS for channel boards', async () => {
-        const store = mockStateStore([], state)
-        const {container} = render(wrapIntl(
-            <ReduxProvider store={store}>
-                <RHSChannelBoards/>
-            </ReduxProvider>
-        ))
+        const store = mockStateStore([thunk], state)
+        let container: Element | DocumentFragment | null = null
+        await act(async () => {
+            const result = render(wrapIntl(
+                <ReduxProvider store={store}>
+                    <RHSChannelBoards/>
+                </ReduxProvider>
+            ))
+            container = result.container
+        })
+
         expect(container).toMatchSnapshot()
     })
 
     it('renders with empty list of boards', async () => {
         const localState = {...state, boards: {...state.boards, boards: {}}}
-        const store = mockStateStore([], localState)
-        const {container} = render(wrapIntl(
-            <ReduxProvider store={store}>
-                <RHSChannelBoards/>
-            </ReduxProvider>
-        ))
+        const store = mockStateStore([thunk], localState)
+
+        let container: Element | DocumentFragment | null = null
+        await act(async () => {
+            const result = render(wrapIntl(
+                <ReduxProvider store={store}>
+                    <RHSChannelBoards/>
+                </ReduxProvider>
+            ))
+            container = result.container
+        })
+
         expect(container).toMatchSnapshot()
     })
 })

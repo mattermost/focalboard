@@ -35,7 +35,7 @@ type BoardsAndBlocks struct {
 
 	// The blocks
 	// required: false
-	Blocks []Block `json:"blocks"`
+	Blocks []*Block `json:"blocks"`
 }
 
 func (bab *BoardsAndBlocks) IsValid() error {
@@ -134,18 +134,18 @@ func (dbab *PatchBoardsAndBlocks) IsValid() error {
 	return nil
 }
 
-func GenerateBoardsAndBlocksIDs(bab *BoardsAndBlocks, logger *mlog.Logger) (*BoardsAndBlocks, error) {
+func GenerateBoardsAndBlocksIDs(bab *BoardsAndBlocks, logger mlog.LoggerIFace) (*BoardsAndBlocks, error) {
 	if err := bab.IsValid(); err != nil {
 		return nil, err
 	}
 
-	blocksByBoard := map[string][]Block{}
+	blocksByBoard := map[string][]*Block{}
 	for _, block := range bab.Blocks {
 		blocksByBoard[block.BoardID] = append(blocksByBoard[block.BoardID], block)
 	}
 
 	boards := []*Board{}
-	blocks := []Block{}
+	blocks := []*Block{}
 	for _, board := range bab.Boards {
 		newID := utils.NewID(utils.IDTypeBoard)
 		for _, block := range blocksByBoard[board.ID] {

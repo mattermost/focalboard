@@ -4,7 +4,7 @@ import {Block, BlockPatch, FileInfo} from './blocks/block'
 import {Board, BoardsAndBlocks, BoardsAndBlocksPatch, BoardPatch, BoardMember} from './blocks/board'
 import {ISharing} from './blocks/sharing'
 import {OctoUtils} from './octoUtils'
-import {IUser, UserConfigPatch} from './user'
+import {IUser, UserConfigPatch, UserPreference} from './user'
 import {Utils} from './utils'
 import {ClientConfig} from './config/clientConfig'
 import {UserSettings} from './userSettings'
@@ -13,9 +13,11 @@ import {Channel} from './store/channels'
 import {Team} from './store/teams'
 import {Subscription} from './wsclient'
 import {PrepareOnboardingResponse} from './onboardingTour'
-import {Constants} from "./constants"
+import {Constants} from './constants'
 
 import {BoardsCloudLimits} from './boardsCloudLimits'
+import {TopBoardResponse} from './insights'
+import {BoardSiteStatistics} from './statistics'
 
 //
 // OctoClient is the client interface to the server APIs
@@ -187,7 +189,37 @@ class OctoClient {
         return user
     }
 
-    async patchUserConfig(userID: string, patch: UserConfigPatch): Promise<Record<string, string> | undefined> {
+    async getUsersList(userIds: string[]): Promise<IUser[] | []> {
+        const path = '/api/v2/users'
+        const body = JSON.stringify(userIds)
+        const response = await fetch(this.getBaseURL() + path, {
+            headers: this.headers(),
+            method: 'POST',
+            body,
+        })
+
+        if (response.status !== 200) {
+            return []
+        }
+
+        return (await this.getJson(response, [])) as IUser[]
+    }
+
+    async getMyConfig(): Promise<UserPreference[] | undefined> {
+        const path = '/api/v2/users/me/config'
+        const response = await fetch(this.getBaseURL() + path, {
+            headers: this.headers(),
+            method: 'GET',
+        })
+
+        if (response.status !== 200) {
+            return undefined
+        }
+
+        return (await this.getJson(response, [])) as UserPreference[]
+    }
+
+    async patchUserConfig(userID: string, patch: UserConfigPatch): Promise<UserPreference[] | undefined> {
         const path = `/api/v2/users/${encodeURIComponent(userID)}/config`
         const body = JSON.stringify(patch)
         const response = await fetch(this.getBaseURL() + path, {
@@ -200,7 +232,7 @@ class OctoClient {
             return undefined
         }
 
-        return (await this.getJson(response, {})) as Record<string, string>
+        return (await this.getJson(response, {})) as UserPreference[]
     }
 
     async exportBoardArchive(boardID: string): Promise<Response> {
@@ -440,7 +472,7 @@ class OctoClient {
 
         const response = await fetch(this.getBaseURL() + `/api/v2/boards/${boardId}/join`, {
             method: 'POST',
-            headers: this.headers()
+            headers: this.headers(),
         })
 
         if (response.status !== 200) {
@@ -587,18 +619,21 @@ class OctoClient {
         return this.getJson(response, null)
     }
 
-    async getTeams(): Promise<Array<Team>> {
+    async getTeams(): Promise<Team[]> {
         const path = this.teamsPath()
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return []
         }
 
-        return this.getJson<Array<Team>>(response, [])
+        return this.getJson<Team[]>(response, [])
     }
 
-    async getTeamUsers(): Promise<IUser[]> {
-        const path = this.teamPath() + '/users'
+    async getTeamUsers(excludeBots?: boolean): Promise<IUser[]> {
+        let path = this.teamPath() + '/users'
+        if (excludeBots) {
+            path += '?exclude_bots=true'
+        }
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return []
@@ -606,8 +641,11 @@ class OctoClient {
         return (await this.getJson(response, [])) as IUser[]
     }
 
-    async searchTeamUsers(searchQuery: string): Promise<IUser[]> {
-        const path = this.teamPath() + `/users?search=${searchQuery}`
+    async searchTeamUsers(searchQuery: string, excludeBots?: boolean): Promise<IUser[]> {
+        let path = this.teamPath() + `/users?search=${searchQuery}`
+        if (excludeBots) {
+            path += '&exclude_bots=true'
+        }
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return []
@@ -720,14 +758,14 @@ class OctoClient {
         })
     }
 
-    async getSidebarCategories(teamID: string): Promise<Array<CategoryBoards>> {
+    async getSidebarCategories(teamID: string): Promise<CategoryBoards[]> {
         const path = `/api/v2/teams/${teamID}/categories`
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return []
         }
 
-        return (await this.getJson(response, [])) as Array<CategoryBoards>
+        return (await this.getJson(response, [])) as CategoryBoards[]
     }
 
     async createSidebarCategory(category: Category): Promise<Response> {
@@ -772,8 +810,8 @@ class OctoClient {
         })
     }
 
-    async search(teamID: string, query: string): Promise<Array<Board>> {
-        const url = `${this.teamPath()}/boards/search?q=${encodeURIComponent(query)}`
+    async search(teamID: string, query: string): Promise<Board[]> {
+        const url = `${this.teamPath(teamID)}/boards/search?q=${encodeURIComponent(query)}`
         const response = await fetch(this.getBaseURL() + url, {
             method: 'GET',
             headers: this.headers(),
@@ -783,10 +821,38 @@ class OctoClient {
             return []
         }
 
-        return (await this.getJson(response, [])) as Array<Board>
+        return (await this.getJson(response, [])) as Board[]
     }
 
-    async getUserBlockSubscriptions(userId: string): Promise<Array<Subscription>> {
+    async searchLinkableBoards(teamID: string, query: string): Promise<Board[]> {
+        const url = `${this.teamPath(teamID)}/boards/search/linkable?q=${encodeURIComponent(query)}`
+        const response = await fetch(this.getBaseURL() + url, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+
+        if (response.status !== 200) {
+            return []
+        }
+
+        return (await this.getJson(response, [])) as Board[]
+    }
+
+    async searchAll(query: string): Promise<Board[]> {
+        const url = `/api/v2/boards/search?q=${encodeURIComponent(query)}`
+        const response = await fetch(this.getBaseURL() + url, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+
+        if (response.status !== 200) {
+            return []
+        }
+
+        return (await this.getJson(response, [])) as Board[]
+    }
+
+    async getUserBlockSubscriptions(userId: string): Promise<Subscription[]> {
         const path = `/api/v2/subscriptions/${userId}`
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
@@ -837,7 +903,7 @@ class OctoClient {
     }
 
     async notifyAdminUpgrade(): Promise<void> {
-        const path = `${this.teamsPath()}/notifyadminupgrade`
+        const path = `${this.teamPath()}/notifyadminupgrade`
         await fetch(this.getBaseURL() + path, {
             headers: this.headers(),
             method: 'POST',
@@ -854,6 +920,39 @@ class OctoClient {
         const limits = (await this.getJson(response, {})) as BoardsCloudLimits
         Utils.log(`Cloud limits: cards=${limits.cards}   views=${limits.views}`)
         return limits
+    }
+
+    async getSiteStatistics(): Promise<BoardSiteStatistics | undefined> {
+        const path = '/api/v2/statistics'
+        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        if (response.status !== 200) {
+            return undefined
+        }
+
+        const stats = (await this.getJson(response, {})) as BoardSiteStatistics
+        Utils.log(`Site Statistics: cards=${stats.card_count}   boards=${stats.board_count}`)
+        return stats
+    }
+
+    // insights
+    async getMyTopBoards(timeRange: string, page: number, perPage: number, teamId: string): Promise<TopBoardResponse | undefined> {
+        const path = `/api/v2/users/me/boards/insights?time_range=${timeRange}&page=${page}&per_page=${perPage}&team_id=${teamId}`
+        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        if (response.status !== 200) {
+            return undefined
+        }
+
+        return (await this.getJson(response, {})) as TopBoardResponse
+    }
+
+    async getTeamTopBoards(timeRange: string, page: number, perPage: number, teamId: string): Promise<TopBoardResponse | undefined> {
+        const path = `/api/v2/teams/${teamId}/boards/insights?time_range=${timeRange}&page=${page}&per_page=${perPage}`
+        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        if (response.status !== 200) {
+            return undefined
+        }
+
+        return (await this.getJson(response, {})) as TopBoardResponse
     }
 }
 

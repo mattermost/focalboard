@@ -3,11 +3,12 @@
 
 import React from 'react'
 import {Provider as ReduxProvider} from 'react-redux'
-import {render, screen, act} from '@testing-library/react'
+import {render, screen, act, fireEvent} from '@testing-library/react'
 import {mocked} from 'jest-mock'
 
-import octoClient from '../../../../webapp/src/octoClient'
 import userEvent from '@testing-library/user-event'
+
+import octoClient from '../../../../webapp/src/octoClient'
 import {mockStateStore} from '../../../../webapp/src/testUtils'
 import {createBoard} from '../../../../webapp/src/blocks/board'
 import {wrapIntl} from '../../../../webapp/src/testUtils'
@@ -33,6 +34,7 @@ describe('components/boardSelector', () => {
         teams: {
             allTeams: [team],
             current: team,
+            currentId: team.id,
         },
         language: {
             value: 'en',
@@ -53,7 +55,7 @@ describe('components/boardSelector', () => {
     })
 
     it('renders with no results', async () => {
-        mockedOctoClient.search.mockResolvedValueOnce([])
+        mockedOctoClient.searchLinkableBoards.mockResolvedValueOnce([])
 
         const store = mockStateStore([], state)
         const {container} = render(wrapIntl(
@@ -72,7 +74,7 @@ describe('components/boardSelector', () => {
     })
 
     it('renders with some results', async () => {
-        mockedOctoClient.search.mockResolvedValueOnce([createBoard(), createBoard(), createBoard()])
+        mockedOctoClient.searchLinkableBoards.mockResolvedValueOnce([createBoard(), createBoard(), createBoard()])
 
         const store = mockStateStore([], state)
         const {container} = render(wrapIntl(
@@ -89,5 +91,31 @@ describe('components/boardSelector', () => {
 
         expect(container).toMatchSnapshot()
     })
-})
 
+    it("escape button should unmount the component", () => {
+        mockedOctoClient.searchLinkableBoards.mockResolvedValueOnce([])
+
+        const store = mockStateStore([], state)
+        const origDispatch = store.dispatch
+        store.dispatch = jest.fn(origDispatch)
+        const {container, getByText} = render(wrapIntl(
+            <ReduxProvider store={store}>
+                <BoardSelector/>
+            </ReduxProvider>
+        ))
+
+        expect(getByText(/Link boards/i)).not.toBeNull()
+
+        expect(store.dispatch).toHaveBeenCalledTimes(0)
+
+        fireEvent.keyDown(getByText(/Link boards/i), {
+            key: "Escape",
+            code: "Escape",
+            keyCode: 27,
+            charCode: 27
+        })
+
+        expect(store.dispatch).toHaveBeenCalledTimes(2)
+        expect(container).toMatchSnapshot()
+    })
+})

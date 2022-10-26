@@ -1,10 +1,10 @@
 .ViewMenu {
 
-    margin-top: -250px;
+    margin-top: -200px;
 
     .view-list {
         max-height: 30vh;
-        overflow-y: scroll;
+        overflow-y: auto;
         height: auto;
     }
 
@@ -14,6 +14,8 @@
     }
 
     @media (max-height: 370px) {
+        margin-top: -230px;
+
         .subMenu {
             height: 50px;
             overflow-y: scroll;

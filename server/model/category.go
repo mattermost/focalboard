@@ -1,6 +1,8 @@
 package model
 
 import (
+	"encoding/json"
+	"io"
 	"strings"
 
 	"github.com/mattermost/focalboard/server/utils"
@@ -36,6 +38,10 @@ type Category struct {
 	// The deleted time in miliseconds since the current epoch. Set to indicate this category is deleted
 	// required: false
 	DeleteAt int64 `json:"deleteAt"`
+
+	// Category's state in client side
+	// required: true
+	Collapsed bool `json:"collapsed"`
 }
 
 func (c *Category) Hydrate() {
@@ -46,34 +52,26 @@ func (c *Category) Hydrate() {
 
 func (c *Category) IsValid() error {
 	if strings.TrimSpace(c.ID) == "" {
-		return newErrInvalidCategory("category ID cannot be empty")
+		return NewErrInvalidCategory("category ID cannot be empty")
 	}
 
 	if strings.TrimSpace(c.Name) == "" {
-		return newErrInvalidCategory("category name cannot be empty")
+		return NewErrInvalidCategory("category name cannot be empty")
 	}
 
 	if strings.TrimSpace(c.UserID) == "" {
-		return newErrInvalidCategory("category user ID cannot be empty")
+		return NewErrInvalidCategory("category user ID cannot be empty")
 	}
 
 	if strings.TrimSpace(c.TeamID) == "" {
-		return newErrInvalidCategory("category team id ID cannot be empty")
+		return NewErrInvalidCategory("category team id ID cannot be empty")
 	}
 
 	return nil
 }
 
-type ErrInvalidCategory struct {
-	msg string
-}
-
-func newErrInvalidCategory(msg string) *ErrInvalidCategory {
-	return &ErrInvalidCategory{
-		msg: msg,
-	}
-}
-
-func (e *ErrInvalidCategory) Error() string {
-	return e.msg
+func CategoryFromJSON(data io.Reader) *Category {
+	var category *Category
+	_ = json.NewDecoder(data).Decode(&category)
+	return category
 }

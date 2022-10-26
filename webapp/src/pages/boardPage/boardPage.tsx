@@ -1,18 +1,45 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 import React, {useEffect, useState, useMemo, useCallback} from 'react'
+import {batch} from 'react-redux'
 import {FormattedMessage, useIntl} from 'react-intl'
 import {useRouteMatch} from 'react-router-dom'
 
 import Workspace from '../../components/workspace'
 import CloudMessage from '../../components/messages/cloudMessage'
+import VersionMessage from '../../components/messages/versionMessage'
 import octoClient from '../../octoClient'
+import {Subscription, WSClient} from '../../wsclient'
 import {Utils} from '../../utils'
-import wsClient from '../../wsclient'
-import {getCurrentBoardId, setCurrent as setCurrentBoard, fetchBoardMembers} from '../../store/boards'
-import {getCurrentViewId, setCurrent as setCurrentView} from '../../store/views'
+import {useWebsockets} from '../../hooks/websockets'
+import {IUser, UserConfigPatch} from '../../user'
+import {Block} from '../../blocks/block'
+import {ContentBlock} from '../../blocks/contentBlock'
+import {CommentBlock} from '../../blocks/commentBlock'
+import {Board, BoardMember} from '../../blocks/board'
+import {BoardView} from '../../blocks/boardView'
+import {Card} from '../../blocks/card'
+import {
+    updateBoards,
+    updateMembersEnsuringBoardsAndUsers,
+    getCurrentBoardId,
+    setCurrent as setCurrentBoard,
+    fetchBoardMembers,
+    addMyBoardMemberships,
+} from '../../store/boards'
+import {getCurrentViewId, setCurrent as setCurrentView, updateViews} from '../../store/views'
 import {initialLoad, initialReadOnlyLoad, loadBoardData} from '../../store/initialLoad'
 import {useAppSelector, useAppDispatch} from '../../store/hooks'
+import {setTeam} from '../../store/teams'
+import {updateCards} from '../../store/cards'
+import {updateComments} from '../../store/comments'
+import {updateContents} from '../../store/contents'
+import {
+    fetchUserBlockSubscriptions,
+    getMe,
+    followBlock,
+    unfollowBlock, patchProps, getMyConfig,
+} from '../../store/users'
 import {setGlobalError} from '../../store/globalError'
 import {UserSettings} from '../../userSettings'
 
@@ -20,10 +47,8 @@ import IconButton from '../../widgets/buttons/iconButton'
 import CloseIcon from '../../widgets/icons/close'
 
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
-import {fetchUserBlockSubscriptions, getMe} from '../../store/users'
-import {IUser} from '../../user'
 
-import {Constants} from "../../constants"
+import {Constants} from '../../constants'
 
 import SetWindowTitleAndIcon from './setWindowTitleAndIcon'
 import TeamToBoardAndViewRedirect from './teamToBoardAndViewRedirect'
@@ -35,6 +60,7 @@ import './boardPage.scss'
 
 type Props = {
     readonly?: boolean
+    new?: boolean
 }
 
 const BoardPage = (props: Props): JSX.Element => {
@@ -45,7 +71,9 @@ const BoardPage = (props: Props): JSX.Element => {
     const match = useRouteMatch<{boardId: string, viewId: string, cardId?: string, teamId?: string}>()
     const [mobileWarningClosed, setMobileWarningClosed] = useState(UserSettings.mobileWarningClosed)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
+    const viewId = match.params.viewId
     const me = useAppSelector<IUser|null>(getMe)
+    const myConfig = useAppSelector(getMyConfig)
 
     // if we're in a legacy route and not showing a shared board,
     // redirect to the new URL schema equivalent
@@ -68,11 +96,7 @@ const BoardPage = (props: Props): JSX.Element => {
     useEffect(() => {
         UserSettings.lastTeamId = teamId
         octoClient.teamId = teamId
-        wsClient.teamId = teamId
-        const windowAny = (window as any)
-        if (windowAny.setTeamInSidebar) {
-            windowAny.setTeamInSidebar(teamId)
-        }
+        dispatch(setTeam(teamId))
     }, [teamId])
 
     const loadAction: (boardId: string) => any = useMemo(() => {
@@ -81,6 +105,71 @@ const BoardPage = (props: Props): JSX.Element => {
         }
         return initialLoad
     }, [props.readonly])
+
+    useWebsockets(teamId, (wsClient) => {
+        const incrementalBlockUpdate = (_: WSClient, blocks: Block[]) => {
+            const teamBlocks = blocks
+
+            batch(() => {
+                dispatch(updateViews(teamBlocks.filter((b: Block) => b.type === 'view' || b.deleteAt !== 0) as BoardView[]))
+                dispatch(updateCards(teamBlocks.filter((b: Block) => b.type === 'card' || b.deleteAt !== 0) as Card[]))
+                dispatch(updateComments(teamBlocks.filter((b: Block) => b.type === 'comment' || b.deleteAt !== 0) as CommentBlock[]))
+                dispatch(updateContents(teamBlocks.filter((b: Block) => b.type !== 'card' && b.type !== 'view' && b.type !== 'board' && b.type !== 'comment') as ContentBlock[]))
+            })
+        }
+
+        const incrementalBoardUpdate = (_: WSClient, boards: Board[]) => {
+            // only takes into account the entities that belong to the team or the user boards
+            const teamBoards = boards.filter((b: Board) => b.teamId === Constants.globalTeamId || b.teamId === teamId)
+            const activeBoard = teamBoards.find((b: Board) => b.id === activeBoardId)
+            dispatch(updateBoards(teamBoards))
+
+            if (activeBoard) {
+                dispatch(fetchBoardMembers({
+                    teamId,
+                    boardId: activeBoardId,
+                }))
+            }
+        }
+
+        const incrementalBoardMemberUpdate = (_: WSClient, members: BoardMember[]) => {
+            dispatch(updateMembersEnsuringBoardsAndUsers(members))
+
+            if (me) {
+                const myBoardMemberships = members.filter((boardMember) => boardMember.userId === me.id)
+                dispatch(addMyBoardMemberships(myBoardMemberships))
+            }
+        }
+
+        const dispatchLoadAction = () => {
+            dispatch(loadAction(match.params.boardId))
+        }
+
+        Utils.log('useWEbsocket adding onChange handler')
+        wsClient.addOnChange(incrementalBlockUpdate, 'block')
+        wsClient.addOnChange(incrementalBoardUpdate, 'board')
+        wsClient.addOnChange(incrementalBoardMemberUpdate, 'boardMembers')
+        wsClient.addOnReconnect(dispatchLoadAction)
+
+        wsClient.setOnFollowBlock((_: WSClient, subscription: Subscription): void => {
+            if (subscription.subscriberId === me?.id) {
+                dispatch(followBlock(subscription))
+            }
+        })
+        wsClient.setOnUnfollowBlock((_: WSClient, subscription: Subscription): void => {
+            if (subscription.subscriberId === me?.id) {
+                dispatch(unfollowBlock(subscription))
+            }
+        })
+
+        return () => {
+            Utils.log('useWebsocket cleanup')
+            wsClient.removeOnChange(incrementalBlockUpdate, 'block')
+            wsClient.removeOnChange(incrementalBoardUpdate, 'board')
+            wsClient.removeOnChange(incrementalBoardMemberUpdate, 'boardMembers')
+            wsClient.removeOnReconnect(dispatchLoadAction)
+        }
+    }, [me?.id, activeBoardId])
 
     const loadOrJoinBoard = useCallback(async (userId: string, boardTeamId: string, boardId: string) => {
         // and fetch its data
@@ -112,16 +201,56 @@ const BoardPage = (props: Props): JSX.Element => {
             // and set it as most recently viewed board
             UserSettings.setLastBoardID(teamId, match.params.boardId)
 
-            if (match.params.viewId && match.params.viewId !== Constants.globalTeamId) {
-                dispatch(setCurrentView(match.params.viewId))
-                UserSettings.setLastViewId(match.params.boardId, match.params.viewId)
+            if (viewId !== Constants.globalTeamId) {
+                // reset current, even if empty string
+                dispatch(setCurrentView(viewId))
+                if (viewId) {
+                    // don't reset per board if empty string
+                    UserSettings.setLastViewId(match.params.boardId, viewId)
+                }
             }
 
             if (!props.readonly && me) {
                 loadOrJoinBoard(me.id, teamId, match.params.boardId)
             }
         }
-    }, [teamId, match.params.boardId, match.params.viewId, me?.id])
+    }, [teamId, match.params.boardId, viewId, me?.id])
+
+    const handleUnhideBoard = async (boardID: string) => {
+        Utils.log('handleUnhideBoard called')
+        if (!me) {
+            return
+        }
+
+        const hiddenBoards = {...(myConfig.hiddenBoardIDs ? myConfig.hiddenBoardIDs.value : {})}
+
+        // const index = hiddenBoards.indexOf(boardID)
+        // hiddenBoards.splice(index, 1)
+        delete hiddenBoards[boardID]
+        const hiddenBoardsArray = Object.keys(hiddenBoards)
+        const patch: UserConfigPatch = {
+            updatedFields: {
+                hiddenBoardIDs: JSON.stringify(hiddenBoardsArray),
+            },
+        }
+        const patchedProps = await octoClient.patchUserConfig(me.id, patch)
+        if (!patchedProps) {
+            return
+        }
+
+        await dispatch(patchProps(patchedProps))
+    }
+
+    useEffect(() => {
+        if (!teamId || !match.params.boardId) {
+            return
+        }
+
+        const hiddenBoardIDs = myConfig.hiddenBoardIDs?.value || {}
+        if (hiddenBoardIDs[match.params.boardId]) {
+            handleUnhideBoard(match.params.boardId)
+        }
+    }, [me?.id, teamId, match.params.boardId])
 
     if (props.readonly) {
         useEffect(() => {
@@ -133,17 +262,13 @@ const BoardPage = (props: Props): JSX.Element => {
 
     return (
         <div className='BoardPage'>
-            <TeamToBoardAndViewRedirect/>
+            {!props.new && <TeamToBoardAndViewRedirect/>}
             <BackwardCompatibilityQueryParamsRedirect/>
             <SetWindowTitleAndIcon/>
             <UndoRedoHotKeys/>
-            <WebsocketConnection
-                teamId={teamId}
-                boardId={match.params.boardId}
-                readonly={props.readonly || false}
-                loadAction={loadAction}
-            />
+            <WebsocketConnection/>
             <CloudMessage/>
+            <VersionMessage/>
 
             {!mobileWarningClosed &&
                 <div className='mobileWarning'>

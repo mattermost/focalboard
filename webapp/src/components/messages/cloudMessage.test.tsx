@@ -41,10 +41,14 @@ describe('components/messages/CloudMessage', () => {
             id: 'user-id-1',
             username: 'username_1',
             email: '',
+            nickname: '',
+            firstname: '',
+            lastname: '',
             props: {},
             create_at: 0,
             update_at: 0,
             is_bot: false,
+            is_guest: false,
             roles: 'system_user',
         }
         const state = {
@@ -70,17 +74,22 @@ describe('components/messages/CloudMessage', () => {
             id: 'user-id-1',
             username: 'username_1',
             email: '',
-            props: {
-                focalboard_cloudMessageCanceled: 'true',
-            },
+            nickname: '',
+            firstname: '',
+            lastname: '',
             create_at: 0,
             update_at: 0,
             is_bot: false,
+            is_guest: false,
             roles: 'system_user',
+            props: {},
         }
         const state = {
             users: {
                 me,
+                myConfig: {
+                    cloudMessageCanceled: {value: 'true'},
+                },
             },
         }
         const store = mockStore(state)
@@ -101,10 +110,14 @@ describe('components/messages/CloudMessage', () => {
             id: 'user-id-1',
             username: 'username_1',
             email: '',
+            nickname: '',
+            firstname: '',
+            lastname: '',
             props: {},
             create_at: 0,
             update_at: 0,
             is_bot: false,
+            is_guest: false,
             roles: 'system_user',
         }
         const state = {
@@ -128,7 +141,7 @@ describe('components/messages/CloudMessage', () => {
         userEvent.click(buttonElement)
         expect(mockedOctoClient.patchUserConfig).toBeCalledWith('user-id-1', {
             updatedFields: {
-                focalboard_cloudMessageCanceled: 'true',
+                cloudMessageCanceled: 'true',
             },
         })
     })
@@ -138,10 +151,14 @@ describe('components/messages/CloudMessage', () => {
             id: 'single-user',
             username: 'single-user',
             email: 'single-user',
+            nickname: '',
+            firstname: '',
+            lastname: '',
             props: {},
             create_at: 0,
             update_at: Date.now() - (1000 * 60 * 60 * 24), //24 hours,
             is_bot: false,
+            is_guest: false,
             roles: 'system_user',
         }
         const state = {

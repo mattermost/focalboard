@@ -1,4 +1,4 @@
-//go:generate mockgen --build_flags=--mod=mod -destination=mocks/mockstore.go -package mocks . Store
+//go:generate mockgen -destination=mocks/mockstore.go -package mocks . Store
 package ws
 
 import (
@@ -28,7 +28,7 @@ type Store interface {
 }
 
 type Adapter interface {
-	BroadcastBlockChange(teamID string, block model.Block)
+	BroadcastBlockChange(teamID string, block *model.Block)
 	BroadcastBlockDelete(teamID, blockID, boardID string)
 	BroadcastBoardChange(teamID string, board *model.Board)
 	BroadcastBoardDelete(teamID, boardID string)

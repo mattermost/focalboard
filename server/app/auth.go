@@ -64,13 +64,25 @@ func (a *App) GetUser(id string) (*model.User, error) {
 	return user, nil
 }
 
+func (a *App) GetUsersList(userIDs []string) ([]*model.User, error) {
+	if len(userIDs) == 0 {
+		return nil, errors.New("No User IDs")
+	}
+
+	users, err := a.store.GetUsersList(userIDs)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to find users")
+	}
+	return users, nil
+}
+
 // Login create a new user session if the authentication data is valid.
 func (a *App) Login(username, email, password, mfaToken string) (string, error) {
 	var user *model.User
 	if username != "" {
 		var err error
 		user, err = a.store.GetUserByUsername(username)
-		if err != nil {
+		if err != nil && !model.IsErrNotFound(err) {
 			a.metrics.IncrementLoginFailCount(1)
 			return "", errors.Wrap(err, "invalid username or password")
 		}
@@ -79,11 +91,12 @@ func (a *App) Login(username, email, password, mfaToken string) (string, error) 
 	if user == nil && email != "" {
 		var err error
 		user, err = a.store.GetUserByEmail(email)
-		if err != nil {
+		if err != nil && model.IsErrNotFound(err) {
 			a.metrics.IncrementLoginFailCount(1)
 			return "", errors.Wrap(err, "invalid username or password")
 		}
 	}
+
 	if user == nil {
 		a.metrics.IncrementLoginFailCount(1)
 		return "", errors.New("invalid username or password")
@@ -136,7 +149,10 @@ func (a *App) RegisterUser(username, email, password string) error {
 	if username != "" {
 		var err error
 		user, err = a.store.GetUserByUsername(username)
-		if err == nil && user != nil {
+		if err != nil && !model.IsErrNotFound(err) {
+			return err
+		}
+		if user != nil {
 			return errors.New("The username already exists")
 		}
 	}
@@ -144,7 +160,10 @@ func (a *App) RegisterUser(username, email, password string) error {
 	if user == nil && email != "" {
 		var err error
 		user, err = a.store.GetUserByEmail(email)
-		if err == nil && user != nil {
+		if err != nil && !model.IsErrNotFound(err) {
+			return err
+		}
+		if user != nil {
 			return errors.New("The email already exists")
 		}
 	}
@@ -159,7 +178,7 @@ func (a *App) RegisterUser(username, email, password string) error {
 		return errors.Wrap(err, "Invalid password")
 	}
 
-	err = a.store.CreateUser(&model.User{
+	_, err = a.store.CreateUser(&model.User{
 		ID:          utils.NewID(utils.IDTypeUser),
 		Username:    username,
 		Email:       email,
@@ -167,7 +186,6 @@ func (a *App) RegisterUser(username, email, password string) error {
 		MfaSecret:   "",
 		AuthService: a.config.AuthMode,
 		AuthData:    "",
-		Props:       map[string]interface{}{},
 	})
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new user")

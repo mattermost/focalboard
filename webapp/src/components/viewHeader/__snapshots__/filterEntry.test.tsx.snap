@@ -15,7 +15,7 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
         type="button"
       >
         <span>
-          (unknown)
+          Status
         </span>
       </button>
       <div
@@ -27,6 +27,33 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
           <div
             class="menu-options"
           >
+            <div>
+              <div
+                aria-label="Title"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    Title
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
             <div>
               <div
                 aria-label="Status"
@@ -41,9 +68,13 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Status
+                  <div
+                    class="menu-name"
+                  >
+                    Status
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -64,9 +95,13 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Property 1
+                  <div
+                    class="menu-name"
+                  >
+                    Property 1
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -87,9 +122,13 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Property 2
+                  <div
+                    class="menu-name"
+                  >
+                    Property 2
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -110,9 +149,13 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Property 3
+                  <div
+                    class="menu-name"
+                  >
+                    Property 3
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -139,9 +182,13 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
                 />
               </div>
               <div
-                class="menu-name"
+                class="menu-option__content"
               >
-                Cancel
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
               </div>
               <div
                 class="noicon"
@@ -162,6 +209,20 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
       >
         <span>
           includes
+        </span>
+      </button>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper filterValue"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Status
         </span>
       </button>
     </div>
@@ -195,7 +256,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
         type="button"
       >
         <span>
-          (unknown)
+          Status
         </span>
       </button>
     </div>
@@ -235,16 +296,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  includes
+                  <div
+                    class="menu-name"
+                  >
+                    includes
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="doesn't include"
                 class="MenuOption TextOption menu-option"
@@ -258,16 +321,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  doesn't include
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't include
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is empty"
                 class="MenuOption TextOption menu-option"
@@ -281,16 +346,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is empty
+                  <div
+                    class="menu-name"
+                  >
+                    is empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is not empty"
                 class="MenuOption TextOption menu-option"
@@ -304,15 +371,21 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is not empty
+                  <div
+                    class="menu-name"
+                  >
+                    is not empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
             </div>
+            <div />
+            <div />
           </div>
           <div
             class="menu-spacer hideOnWidescreen"
@@ -333,9 +406,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
                 />
               </div>
               <div
-                class="menu-name"
+                class="menu-option__content"
               >
-                Cancel
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
               </div>
               <div
                 class="noicon"
@@ -344,6 +421,20 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
           </div>
         </div>
       </div>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper filterValue"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Status
+        </span>
+      </button>
     </div>
     <div
       class="octo-spacer"
@@ -375,7 +466,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
         type="button"
       >
         <span>
-          (unknown)
+          Status
         </span>
       </button>
     </div>
@@ -415,16 +506,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  includes
+                  <div
+                    class="menu-name"
+                  >
+                    includes
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="doesn't include"
                 class="MenuOption TextOption menu-option"
@@ -438,16 +531,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  doesn't include
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't include
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is empty"
                 class="MenuOption TextOption menu-option"
@@ -461,16 +556,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is empty
+                  <div
+                    class="menu-name"
+                  >
+                    is empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is not empty"
                 class="MenuOption TextOption menu-option"
@@ -484,15 +581,21 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is not empty
+                  <div
+                    class="menu-name"
+                  >
+                    is not empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
             </div>
+            <div />
+            <div />
           </div>
           <div
             class="menu-spacer hideOnWidescreen"
@@ -513,9 +616,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
                 />
               </div>
               <div
-                class="menu-name"
+                class="menu-option__content"
               >
-                Cancel
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
               </div>
               <div
                 class="noicon"
@@ -524,6 +631,20 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
           </div>
         </div>
       </div>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper filterValue"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Status
+        </span>
+      </button>
     </div>
     <div
       class="octo-spacer"
@@ -555,7 +676,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
         type="button"
       >
         <span>
-          (unknown)
+          Status
         </span>
       </button>
     </div>
@@ -595,16 +716,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  includes
+                  <div
+                    class="menu-name"
+                  >
+                    includes
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="doesn't include"
                 class="MenuOption TextOption menu-option"
@@ -618,16 +741,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  doesn't include
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't include
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is empty"
                 class="MenuOption TextOption menu-option"
@@ -641,16 +766,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is empty
+                  <div
+                    class="menu-name"
+                  >
+                    is empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is not empty"
                 class="MenuOption TextOption menu-option"
@@ -664,15 +791,21 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is not empty
+                  <div
+                    class="menu-name"
+                  >
+                    is not empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
             </div>
+            <div />
+            <div />
           </div>
           <div
             class="menu-spacer hideOnWidescreen"
@@ -693,9 +826,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
                 />
               </div>
               <div
-                class="menu-name"
+                class="menu-option__content"
               >
-                Cancel
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
               </div>
               <div
                 class="noicon"
@@ -704,6 +841,20 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
           </div>
         </div>
       </div>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper filterValue"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Status
+        </span>
+      </button>
     </div>
     <div
       class="octo-spacer"
@@ -735,7 +886,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
         type="button"
       >
         <span>
-          (unknown)
+          Status
         </span>
       </button>
     </div>
@@ -775,16 +926,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  includes
+                  <div
+                    class="menu-name"
+                  >
+                    includes
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="doesn't include"
                 class="MenuOption TextOption menu-option"
@@ -798,16 +951,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  doesn't include
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't include
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is empty"
                 class="MenuOption TextOption menu-option"
@@ -821,16 +976,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is empty
+                  <div
+                    class="menu-name"
+                  >
+                    is empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is not empty"
                 class="MenuOption TextOption menu-option"
@@ -844,15 +1001,21 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is not empty
+                  <div
+                    class="menu-name"
+                  >
+                    is not empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
             </div>
+            <div />
+            <div />
           </div>
           <div
             class="menu-spacer hideOnWidescreen"
@@ -873,9 +1036,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
                 />
               </div>
               <div
-                class="menu-name"
+                class="menu-option__content"
               >
-                Cancel
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
               </div>
               <div
                 class="noicon"
@@ -884,6 +1051,20 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
           </div>
         </div>
       </div>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper filterValue"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Status
+        </span>
+      </button>
     </div>
     <div
       class="octo-spacer"
@@ -915,7 +1096,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
         type="button"
       >
         <span>
-          (unknown)
+          Status
         </span>
       </button>
     </div>
@@ -955,16 +1136,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  includes
+                  <div
+                    class="menu-name"
+                  >
+                    includes
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="doesn't include"
                 class="MenuOption TextOption menu-option"
@@ -978,16 +1161,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  doesn't include
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't include
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is empty"
                 class="MenuOption TextOption menu-option"
@@ -1001,16 +1186,18 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is empty
+                  <div
+                    class="menu-name"
+                  >
+                    is empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
-            </div>
-            <div>
               <div
                 aria-label="is not empty"
                 class="MenuOption TextOption menu-option"
@@ -1024,15 +1211,21 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  is not empty
+                  <div
+                    class="menu-name"
+                  >
+                    is not empty
+                  </div>
                 </div>
                 <div
                   class="noicon"
                 />
               </div>
             </div>
+            <div />
+            <div />
           </div>
           <div
             class="menu-spacer hideOnWidescreen"
@@ -1053,9 +1246,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
                 />
               </div>
               <div
-                class="menu-name"
+                class="menu-option__content"
               >
-                Cancel
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
               </div>
               <div
                 class="noicon"
@@ -1064,6 +1261,20 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
           </div>
         </div>
       </div>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper filterValue"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Status
+        </span>
+      </button>
     </div>
     <div
       class="octo-spacer"
@@ -1109,6 +1320,33 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
           >
             <div>
               <div
+                aria-label="Title"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    Title
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
+            <div>
+              <div
                 aria-label="Status"
                 class="MenuOption TextOption menu-option"
                 role="button"
@@ -1121,9 +1359,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Status
+                  <div
+                    class="menu-name"
+                  >
+                    Status
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -1144,9 +1386,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Property 1
+                  <div
+                    class="menu-name"
+                  >
+                    Property 1
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -1167,9 +1413,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Property 2
+                  <div
+                    class="menu-name"
+                  >
+                    Property 2
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -1190,9 +1440,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
                   />
                 </div>
                 <div
-                  class="menu-name"
+                  class="menu-option__content"
                 >
-                  Property 3
+                  <div
+                    class="menu-name"
+                  >
+                    Property 3
+                  </div>
                 </div>
                 <div
                   class="noicon"
@@ -1219,9 +1473,13 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
                 />
               </div>
               <div
-                class="menu-name"
+                class="menu-option__content"
               >
-                Cancel
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
               </div>
               <div
                 class="noicon"
@@ -1245,6 +1503,531 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
         </span>
       </button>
     </div>
+    <div
+      class="octo-spacer"
+    />
+    <button
+      class="Button"
+      type="button"
+    >
+      <span>
+        Delete
+      </span>
+    </button>
+  </div>
+</div>
+`;
+
+exports[`components/viewHeader/filterEntry return filterEntry for boolean field 1`] = `
+<div>
+  <div
+    class="FilterEntry"
+  >
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Property 1
+        </span>
+      </button>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          is set
+        </span>
+      </button>
+    </div>
+    <div
+      class="octo-spacer"
+    />
+    <button
+      class="Button"
+      type="button"
+    >
+      <span>
+        Delete
+      </span>
+    </button>
+  </div>
+</div>
+`;
+
+exports[`components/viewHeader/filterEntry return filterEntry for boolean field 2`] = `
+<div>
+  <div
+    class="FilterEntry"
+  >
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Property 1
+        </span>
+      </button>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          is set
+        </span>
+      </button>
+      <div
+        class="Menu noselect bottom "
+      >
+        <div
+          class="menu-contents"
+        >
+          <div
+            class="menu-options"
+          >
+            <div />
+            <div>
+              <div
+                aria-label="is set"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    is set
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                aria-label="is not set"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    is not set
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
+            <div />
+          </div>
+          <div
+            class="menu-spacer hideOnWidescreen"
+          />
+          <div
+            class="menu-options hideOnWidescreen"
+          >
+            <div
+              aria-label="Cancel"
+              class="MenuOption TextOption menu-option menu-cancel"
+              role="button"
+            >
+              <div
+                class="d-flex"
+              >
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                class="menu-option__content"
+              >
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
+              </div>
+              <div
+                class="noicon"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="octo-spacer"
+    />
+    <button
+      class="Button"
+      type="button"
+    >
+      <span>
+        Delete
+      </span>
+    </button>
+  </div>
+</div>
+`;
+
+exports[`components/viewHeader/filterEntry return filterEntry for text field 1`] = `
+<div>
+  <div
+    class="FilterEntry"
+  >
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Property 2
+        </span>
+      </button>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          contains
+        </span>
+      </button>
+    </div>
+    <input
+      class="Editable "
+      placeholder="filter text"
+      title=""
+      value=""
+    />
+    <div
+      class="octo-spacer"
+    />
+    <button
+      class="Button"
+      type="button"
+    >
+      <span>
+        Delete
+      </span>
+    </button>
+  </div>
+</div>
+`;
+
+exports[`components/viewHeader/filterEntry return filterEntry for text field 2`] = `
+<div>
+  <div
+    class="FilterEntry"
+  >
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          Property 2
+        </span>
+      </button>
+    </div>
+    <div
+      aria-label="menuwrapper"
+      class="MenuWrapper"
+      role="button"
+    >
+      <button
+        class="Button"
+        type="button"
+      >
+        <span>
+          contains
+        </span>
+      </button>
+      <div
+        class="Menu noselect bottom "
+      >
+        <div
+          class="menu-contents"
+        >
+          <div
+            class="menu-options"
+          >
+            <div />
+            <div />
+            <div>
+              <div
+                aria-label="is"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    is
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                aria-label="contains"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    contains
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                aria-label="doesn't contain"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't contain
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                aria-label="starts with"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    starts with
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                aria-label="doesn't start with"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't start with
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                aria-label="ends with"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    ends with
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                aria-label="doesn't end with"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    doesn't end with
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="menu-spacer hideOnWidescreen"
+          />
+          <div
+            class="menu-options hideOnWidescreen"
+          >
+            <div
+              aria-label="Cancel"
+              class="MenuOption TextOption menu-option menu-cancel"
+              role="button"
+            >
+              <div
+                class="d-flex"
+              >
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                class="menu-option__content"
+              >
+                <div
+                  class="menu-name"
+                >
+                  Cancel
+                </div>
+              </div>
+              <div
+                class="noicon"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input
+      class="Editable "
+      placeholder="filter text"
+      title=""
+      value=""
+    />
     <div
       class="octo-spacer"
     />

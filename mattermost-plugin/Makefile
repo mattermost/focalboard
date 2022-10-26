@@ -60,6 +60,9 @@ all: check-style test dist
 apply:
 	./build/bin/manifest apply
 
+setup-go-work: ## Sets up a go.work file
+	cd ..; go run ./build/gowork/main.go
+
 ## Runs eslint and golangci-lint
 .PHONY: check-style
 check-style: webapp/node_modules
@@ -72,7 +75,7 @@ endif
 
 ifneq ($(HAS_SERVER),)
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
-		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install for installation instructions."; \
+		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
 		exit 1; \
 	fi; \
 
@@ -80,8 +83,8 @@ ifneq ($(HAS_SERVER),)
 	golangci-lint run ./...
 endif
 
-templates-archive: ## Build templates archive file
-	cd ../server/assets/build-template-archive; go run -tags '$(BUILD_TAGS)' main.go --dir="../templates-boardarchive" --out="../templates.boardarchive" 
+templates-archive: setup-go-work ## Build templates archive file
+	cd ../server/assets/build-template-archive; go run -tags '$(BUILD_TAGS)' main.go --dir="../templates-boardarchive" --out="../templates.boardarchive"
 
 ## Builds the server, if it exists, for all supported architectures.
 .PHONY: server
@@ -143,7 +146,6 @@ endif
 ifneq ($(HAS_WEBAPP),)
 	mkdir -p dist/$(PLUGIN_ID)/webapp
 	cp -r webapp/dist dist/$(PLUGIN_ID)/webapp/
-	cp -r webapp/dist/static/* dist/$(PLUGIN_ID)/pack/static/
 endif
 	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
 
@@ -171,6 +173,14 @@ endif
 .PHONY: deploy-from-watch
 deploy-from-watch: bundle
 	./build/bin/pluginctl deploy $(PLUGIN_ID) dist/$(BUNDLE_NAME)
+
+.PHONY: build-product
+build-product: apply
+	cd webapp && npm run build:product
+
+.PHONY: watch-product
+watch-product: apply
+	cd webapp && npm run start:product
 
 ## Setup dlv for attaching, identifying the plugin PID for other targets.
 .PHONY: setup-attach

@@ -10,7 +10,9 @@ enum Permission {
     ManageBoardRoles = 'manage_board_roles',
     ManageBoardCards = 'manage_board_cards',
     ManageBoardProperties = 'manage_board_properties',
+    CommentBoardCards = 'comment_board_cards',
     ViewBoard = 'view_board',
+    DeleteOthersComments = 'delete_others_comments'
 }
 
 class Constants {
@@ -34,10 +36,10 @@ class Constants {
     static readonly titleColumnId = '__title'
     static readonly badgesColumnId = '__badges'
 
-    static readonly versionString = '7.2.0'
-    static readonly versionDisplayString = 'Aug 2022'
+    static readonly versionString = '7.5.0'
+    static readonly versionDisplayString = 'Nov 2022'
 
-    static readonly archiveHelpPage = 'https://docs.mattermost.com/boards/data-and-archives.html'
+    static readonly archiveHelpPage = 'https://docs.mattermost.com/boards/migrate-to-boards.html'
     static readonly imports = [
         {
             id: 'trello',
@@ -161,6 +163,10 @@ class Constants {
 
     static readonly keyCodes: {[key: string]: [string, number]} = {
         COMPOSING: ['Composing', 229],
+        ESC: ['Esc', 27],
+        UP: ['Up', 38],
+        DOWN: ['Down', 40],
+        ENTER: ['Enter', 13],
         A: ['a', 65],
         B: ['b', 66],
         C: ['c', 67],
@@ -190,6 +196,10 @@ class Constants {
     }
 
     static readonly globalTeamId = '0'
+
+    static readonly myInsights = 'MY'
+
+    static readonly SystemUserID = 'system'
 }
 
 export {Constants, Permission}

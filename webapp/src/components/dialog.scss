@@ -1,16 +1,34 @@
+@import '../styles/z-index';
+
 .Dialog {
     &.dialog-back {
+        @include z-index(dialog-back);
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        z-index: 200;
+    }
+
+    .dialog-title {
+        margin: 0;
+        font-weight: 600;
+        font-size: 22px;
+        line-height: 28px;
+    }
+
+    .dialog-subtitle {
+        font-size: 12px;
+        margin-top: 8px;
+    }
+
+    .dialog__close {
+        margin: 0 -14px 0 0;
     }
 
     .backdrop {
+        @include z-index(dialog-backdrop);
         position: fixed;
-        z-index: -1;
         width: 100%;
         height: 100%;
         background-color: rgba(var(--center-channel-color-rgb), 0.5);
@@ -24,14 +42,8 @@
         justify-content: center;
     }
 
-    .toolbar {
-        display: flex;
-        flex-direction: row;
-        padding: 16px;
-        justify-content: space-between;
-    }
-
     .dialog {
+        position: relative;
         display: flex;
         flex-direction: column;
         background-color: rgb(var(--center-channel-bg-rgb));
@@ -53,6 +65,7 @@
                 display: none !important;
             }
         }
+
         @media screen and (max-width: 975px) {
             position: fixed;
             top: 0;
@@ -76,16 +89,33 @@
             background-color: rgba(230, 192, 192, 0.9);
         }
 
-        > .toolbar {
+        .IconButton {
+            color: rgba(var(--center-channel-color-rgb), 0.56);
+
+            &:hover {
+                color: rgba(var(--center-channel-color-rgb), 0.72);
+                background-color: rgba(var(--center-channel-color-rgb), 0.08);
+            }
+
+            &:active {
+                background-color: rgba(var(--button-bg-rgb), 0.08);
+                color: rgba(var(--button-bg-rgb), 1);
+            }
+        }
+
+        .toolbar {
             display: flex;
             flex-direction: row;
-            padding: 24px;
+            padding: 24px 32px;
             justify-content: space-between;
+            align-items: flex-start;
         }
 
         .toolbar--right {
             display: flex;
             gap: 8px;
+            align-items: center;
+            height: 28px;
         }
 
         > .content {
@@ -96,6 +126,7 @@
             @media not screen and (max-width: 975px) {
                 padding: 10px 126px;
             }
+
             @media screen and (max-width: 975px) {
                 padding: 10px;
             }

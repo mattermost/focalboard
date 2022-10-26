@@ -51,7 +51,7 @@ type Server struct {
 	auth             *auth.Auth
 	singleUserToken  string
 	isMattermostAuth bool
-	logger           *mlog.Logger
+	logger           mlog.LoggerIFace
 	store            Store
 }
 
@@ -68,7 +68,7 @@ func (wss *websocketSession) isAuthenticated() bool {
 }
 
 // NewServer creates a new Server.
-func NewServer(auth *auth.Auth, singleUserToken string, isMattermostAuth bool, logger *mlog.Logger, store Store) *Server {
+func NewServer(auth *auth.Auth, singleUserToken string, isMattermostAuth bool, logger mlog.LoggerIFace, store Store) *Server {
 	return &Server{
 		listeners:        make(map[*websocketSession]bool),
 		listenersByTeam:  make(map[string][]*websocketSession),
@@ -511,7 +511,7 @@ func (ws *Server) getListenersForTeamAndBoard(teamID, boardID string, ensureUser
 // BroadcastBlockDelete broadcasts delete messages to clients.
 func (ws *Server) BroadcastBlockDelete(teamID, blockID, boardID string) {
 	now := utils.GetMillis()
-	block := model.Block{}
+	block := &model.Block{}
 	block.ID = blockID
 	block.BoardID = boardID
 	block.UpdateAt = now
@@ -521,7 +521,7 @@ func (ws *Server) BroadcastBlockDelete(teamID, blockID, boardID string) {
 }
 
 // BroadcastBlockChange broadcasts update messages to clients.
-func (ws *Server) BroadcastBlockChange(teamID string, block model.Block) {
+func (ws *Server) BroadcastBlockChange(teamID string, block *model.Block) {
 	blockIDsToNotify := []string{block.ID, block.ParentID}
 
 	message := UpdateBlockMsg{

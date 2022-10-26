@@ -1,4 +1,4 @@
-//go:generate mockgen --build_flags=--mod=mod -destination=mocks/mockpluginapi.go -package mocks github.com/mattermost/mattermost-server/v6/plugin API
+//go:generate mockgen -destination=mocks/mockpluginapi.go -package mocks github.com/mattermost/mattermost-server/v6/plugin API
 package ws
 
 import (
@@ -13,7 +13,6 @@ import (
 	"github.com/mattermost/focalboard/server/utils"
 
 	mmModel "github.com/mattermost/mattermost-server/v6/model"
-	"github.com/mattermost/mattermost-server/v6/plugin"
 	"github.com/mattermost/mattermost-server/v6/shared/mlog"
 )
 
@@ -27,7 +26,7 @@ type PluginAdapterInterface interface {
 	OnWebSocketDisconnect(webConnID, userID string)
 	WebSocketMessageHasBeenPosted(webConnID, userID string, req *mmModel.WebSocketRequest)
 	BroadcastConfigChange(clientConfig model.ClientConfig)
-	BroadcastBlockChange(teamID string, block model.Block)
+	BroadcastBlockChange(teamID string, block *model.Block)
 	BroadcastBlockDelete(teamID, blockID, parentID string)
 	BroadcastSubscriptionChange(teamID string, subscription *model.Subscription)
 	BroadcastCardLimitTimestampChange(cardLimitTimestamp int64)
@@ -35,11 +34,11 @@ type PluginAdapterInterface interface {
 }
 
 type PluginAdapter struct {
-	api            plugin.API
+	api            servicesAPI
 	auth           auth.AuthInterface
 	staleThreshold time.Duration
 	store          Store
-	logger         *mlog.Logger
+	logger         mlog.LoggerIFace
 
 	listenersMU       sync.RWMutex
 	listeners         map[string]*PluginAdapterClient
@@ -50,7 +49,14 @@ type PluginAdapter struct {
 	listenersByBlock map[string][]*PluginAdapterClient
 }
 
-func NewPluginAdapter(api plugin.API, auth auth.AuthInterface, store Store, logger *mlog.Logger) *PluginAdapter {
+// servicesAPI is the interface required by the PluginAdapter to interact with
+// the mattermost-server.
+type servicesAPI interface {
+	PublishWebSocketEvent(event string, payload map[string]interface{}, broadcast *mmModel.WebsocketBroadcast)
+	PublishPluginClusterEvent(ev mmModel.PluginClusterEvent, opts mmModel.PluginClusterEventSendOptions) error
+}
+
+func NewPluginAdapter(api servicesAPI, auth auth.AuthInterface, store Store, logger mlog.LoggerIFace) *PluginAdapter {
 	return &PluginAdapter{
 		api:               api,
 		auth:              auth,
@@ -447,7 +453,7 @@ func (pa *PluginAdapter) sendBoardMessage(teamID, boardID string, payload map[st
 	pa.sendBoardMessageSkipCluster(teamID, boardID, payload, ensureUserIDs...)
 }
 
-func (pa *PluginAdapter) BroadcastBlockChange(teamID string, block model.Block) {
+func (pa *PluginAdapter) BroadcastBlockChange(teamID string, block *model.Block) {
 	pa.logger.Debug("BroadcastingBlockChange",
 		mlog.String("teamID", teamID),
 		mlog.String("boardID", block.BoardID),
@@ -480,8 +486,8 @@ func (pa *PluginAdapter) BroadcastCategoryChange(category model.Category) {
 
 	go func() {
 		clusterMessage := &ClusterMessage{
-			Payload:     payload,
-			EnsureUsers: []string{category.UserID},
+			Payload: payload,
+			UserID:  category.UserID,
 		}
 
 		pa.sendMessageToCluster("websocket_message", clusterMessage)
@@ -505,12 +511,23 @@ func (pa *PluginAdapter) BroadcastCategoryBoardChange(teamID, userID string, boa
 		BoardCategories: &boardCategory,
 	}
 
-	pa.sendTeamMessage(websocketActionUpdateCategoryBoard, teamID, utils.StructToMap(message))
+	payload := utils.StructToMap(message)
+
+	go func() {
+		clusterMessage := &ClusterMessage{
+			Payload: payload,
+			UserID:  userID,
+		}
+
+		pa.sendMessageToCluster("websocket_message", clusterMessage)
+	}()
+
+	pa.sendUserMessageSkipCluster(websocketActionUpdateCategoryBoard, utils.StructToMap(message), userID)
 }
 
 func (pa *PluginAdapter) BroadcastBlockDelete(teamID, blockID, boardID string) {
 	now := utils.GetMillis()
-	block := model.Block{}
+	block := &model.Block{}
 	block.ID = blockID
 	block.BoardID = boardID
 	block.UpdateAt = now
@@ -558,7 +575,7 @@ func (pa *PluginAdapter) BroadcastMemberChange(teamID, boardID string, member *m
 		Member: member,
 	}
 
-	pa.sendBoardMessage(teamID, boardID, utils.StructToMap(message))
+	pa.sendBoardMessage(teamID, boardID, utils.StructToMap(message), member.UserID)
 }
 
 func (pa *PluginAdapter) BroadcastMemberDelete(teamID, boardID, userID string) {

@@ -8,24 +8,34 @@ import (
 	"github.com/mattermost/focalboard/server/services/permissions"
 
 	mmModel "github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost-server/v6/shared/mlog"
 )
 
 type APIInterface interface {
+	HasPermissionTo(userID string, permission *mmModel.Permission) bool
 	HasPermissionToTeam(userID string, teamID string, permission *mmModel.Permission) bool
 	HasPermissionToChannel(userID string, channelID string, permission *mmModel.Permission) bool
-	LogError(string, ...interface{})
 }
 
 type Service struct {
-	store permissions.Store
-	api   APIInterface
+	store  permissions.Store
+	api    APIInterface
+	logger mlog.LoggerIFace
 }
 
-func New(store permissions.Store, api APIInterface) *Service {
+func New(store permissions.Store, api APIInterface, logger mlog.LoggerIFace) *Service {
 	return &Service{
-		store: store,
-		api:   api,
+		store:  store,
+		api:    api,
+		logger: logger,
 	}
+}
+
+func (s *Service) HasPermissionTo(userID string, permission *mmModel.Permission) bool {
+	if userID == "" || permission == nil {
+		return false
+	}
+	return s.api.HasPermissionTo(userID, permission)
 }
 
 func (s *Service) HasPermissionToTeam(userID, teamID string, permission *mmModel.Permission) bool {
@@ -59,10 +69,10 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 		}
 		board = boards[0]
 	} else if err != nil {
-		s.api.LogError("error getting board",
-			"boardID", boardID,
-			"userID", userID,
-			"error", err,
+		s.logger.Error("error getting board",
+			mlog.String("boardID", boardID),
+			mlog.String("userID", userID),
+			mlog.Err(err),
 		)
 		return false
 	}
@@ -78,10 +88,10 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 		return false
 	}
 	if err != nil {
-		s.api.LogError("error getting member for board",
-			"boardID", boardID,
-			"userID", userID,
-			"error", err,
+		s.logger.Error("error getting member for board",
+			mlog.String("boardID", boardID),
+			mlog.String("userID", userID),
+			mlog.Err(err),
 		)
 		return false
 	}
@@ -98,10 +108,12 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 	}
 
 	switch permission {
-	case model.PermissionManageBoardType, model.PermissionDeleteBoard, model.PermissionManageBoardRoles, model.PermissionShareBoard:
+	case model.PermissionManageBoardType, model.PermissionDeleteBoard, model.PermissionManageBoardRoles, model.PermissionShareBoard, model.PermissionDeleteOthersComments:
 		return member.SchemeAdmin
 	case model.PermissionManageBoardCards, model.PermissionManageBoardProperties:
 		return member.SchemeAdmin || member.SchemeEditor
+	case model.PermissionCommentBoardCards:
+		return member.SchemeAdmin || member.SchemeEditor || member.SchemeCommenter
 	case model.PermissionViewBoard:
 		return member.SchemeAdmin || member.SchemeEditor || member.SchemeCommenter || member.SchemeViewer
 	default:

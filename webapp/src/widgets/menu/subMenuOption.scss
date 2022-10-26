@@ -1,25 +1,17 @@
-.Menu .menu-options .SubMenuOption.open-left {
-    padding: 4px 5px;
+@import '../../styles/z-index';
 
-    .menu-name {
-        margin-left: 0;
+.Menu .menu-options .SubMenuOption {
+    &.menu-option {
+        padding-right: 16px;
     }
 }
 
 .SubMenuOption {
     position: relative;
 
-    &.open-left {
-        .SubmenuTriangleIcon {
-            position: relative;
-            left: 5px;
-            transform: rotate(180deg);
-        }
-    }
-
     .SubMenu {
+        @include z-index(sub-menu-option-sub-menu);
         position: absolute;
-        z-index: 16;
         min-width: 180px;
         background-color: rgb(var(--center-channel-bg-rgb));
         color: rgb(var(--center-channel-color-rgb));

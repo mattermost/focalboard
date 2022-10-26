@@ -1,9 +1,13 @@
+
+@import '../../styles/z-index';
+
 .ShareBoardDialog {
     .dialog {
         width: 600px;
         max-width: 90%;
         height: auto;
         position: relative;
+        overflow: unset;
     }
 
     .confirmation-dialog-box {
@@ -11,23 +15,19 @@
             position: fixed;
             width: 500px;
         }
-    }
 
-    .toolbar {
-        padding: 0;
-
-        button {
-            position: absolute;
-            right: 16px;
-            top: 16px;
-            z-index: 5;
+        .action-buttons {
+            .Button {
+                height: unset;
+                min-height: 40px;
+                padding: 5px 20px;
+            }
         }
     }
 
     .tabs-container {
         display: flex;
-        padding: 24px 0 0;
-        margin: 0 24px;
+        padding: 24px 32px 0;
         border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
 
         .tab-item {
@@ -54,7 +54,7 @@
     }
 
     .tabs-content {
-        padding: 24px;
+        padding: 24px 32px;
         border-radius: 8px;
 
         .d-flex {
@@ -139,8 +139,7 @@
     }
 
     .share-input__container {
-        margin-top: 16px;
-        padding: 0 24px 24px;
+        padding: 0 32px 24px;
         border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
     }
 
@@ -153,8 +152,8 @@
         width: 100%;
 
         i {
+            @include z-index(share-board-element);
             color: rgba(var(--center-channel-color-rgb), 0.64);
-            z-index: 5;
             position: relative;
             font-size: 18px;
         }
@@ -178,7 +177,7 @@
     }
 
     .user-items {
-        padding: 16px 8px;
+        padding: 16px;
         max-height: 282px;
         overflow: auto;
         border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
@@ -238,4 +237,17 @@
             }
         }
     }
+
+    .ShareBoard-user-selector-item {
+        display: flex;
+        align-items: center;
+
+        img {
+            border-radius: 50px;
+            width: 24px;
+            height: 24px;
+            margin-right: 6px;
+        }
+    }
+
 }

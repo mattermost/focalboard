@@ -12,27 +12,40 @@ import React, {
     useState,
 } from 'react'
 
-import {debounce} from "lodash"
+import {debounce} from 'lodash'
 
 import {useAppSelector} from '../../store/hooks'
 import {IUser} from '../../user'
-import {getBoardUsersList} from '../../store/users'
+import {getBoardUsersList, getMe} from '../../store/users'
 import createLiveMarkdownPlugin from '../live-markdown-plugin/liveMarkdownPlugin'
+import {useHasPermissions} from '../../hooks/permissions'
+import {Permission} from '../../constants'
+import {BoardMember, BoardTypeOpen, MemberRole} from '../../blocks/board'
+import mutator from '../../mutator'
+import ConfirmAddUserForNotifications from '../confirmAddUserForNotifications'
+import RootPortal from '../rootPortal'
 
 import './markdownEditorInput.scss'
 
-import {BoardTypeOpen} from "../../blocks/board"
-import {getCurrentBoard} from "../../store/boards"
-import octoClient from "../../octoClient"
+import {getCurrentBoard} from '../../store/boards'
+import octoClient from '../../octoClient'
+
+import {Utils} from '../../utils'
+import {ClientConfig} from '../../config/clientConfig'
+import {getClientConfig} from '../../store/clientConfig'
 
 import Entry from './entryComponent/entryComponent'
 
 const imageURLForUser = (window as any).Components?.imageURLForUser
 
 type MentionUser = {
+    user: IUser
     name: string
     avatar: string
     is_bot: boolean
+    is_guest: boolean
+    displayName: string
+    isBoardMember: boolean
 }
 
 type Props = {
@@ -45,28 +58,49 @@ type Props = {
 }
 
 const MarkdownEditorInput = (props: Props): ReactElement => {
-    const {onChange, onFocus, onBlur, initialText, id, isEditing} = props
+    const {onChange, onFocus, onBlur, initialText, id} = props
     const boardUsers = useAppSelector<IUser[]>(getBoardUsersList)
     const board = useAppSelector(getCurrentBoard)
+    const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const ref = useRef<Editor>(null)
+    const allowManageBoardRoles = useHasPermissions(board.teamId, board.id, [Permission.ManageBoardRoles])
+    const [confirmAddUser, setConfirmAddUser] = useState<IUser|null>(null)
+    const me = useAppSelector<IUser|null>(getMe)
 
-    const [suggestions, setSuggestions] = useState<Array<MentionUser>>([])
+    const [suggestions, setSuggestions] = useState<MentionUser[]>([])
 
     const loadSuggestions = async (term: string) => {
-        let users: Array<IUser>
+        let users: IUser[]
 
-        if (board && board.type === BoardTypeOpen) {
-            users = await octoClient.searchTeamUsers(term)
+        if (!me?.is_guest && (allowManageBoardRoles || (board && board.type === BoardTypeOpen))) {
+            const excludeBots = true
+            users = await octoClient.searchTeamUsers(term, excludeBots)
         } else {
-            users = boardUsers
+            users = boardUsers.
+                filter((user) => {
+                    // no search term
+                    if (!term) {
+                        return true
+                    }
+
+                    // does the search term occur anywhere in the display name?
+                    return Utils.getUserDisplayName(user, clientConfig.teammateNameDisplay).includes(term)
+                }).
+
+                // first 10 results
+                slice(0, 10)
         }
 
-        const mentions = users.map(
-            (user) => ({
+        const mentions: MentionUser[] = users.map(
+            (user: IUser): MentionUser => ({
                 name: user.username,
                 avatar: `${imageURLForUser ? imageURLForUser(user.id) : ''}`,
-                is_bot: user.is_bot}
-            ))
+                is_bot: user.is_bot,
+                is_guest: user.is_guest,
+                displayName: Utils.getUserDisplayName(user, clientConfig.teammateNameDisplay),
+                isBoardMember: Boolean(boardUsers.find((u) => u.id === user.id)),
+                user,
+            }))
         setSuggestions(mentions)
     }
 
@@ -78,17 +112,33 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         loadSuggestions('')
     }, [])
 
-
     const generateEditorState = (text?: string) => {
         const state = EditorState.createWithContent(ContentState.createFromText(text || ''))
         return EditorState.moveSelectionToEnd(state)
     }
 
-    const [editorState, setEditorState] = useState(() => {
-        return generateEditorState(initialText)
-    })
+    const [editorState, setEditorState] = useState(() => generateEditorState(initialText))
+
+    const addUser = useCallback(async (userId: string, role: string) => {
+        const newRole = role || MemberRole.Viewer
+        const newMember = {
+            boardId: board.id,
+            userId,
+            roles: role,
+            schemeAdmin: newRole === MemberRole.Admin,
+            schemeEditor: newRole === MemberRole.Admin || newRole === MemberRole.Editor,
+            schemeCommenter: newRole === MemberRole.Admin || newRole === MemberRole.Editor || newRole === MemberRole.Commenter,
+            schemeViewer: newRole === MemberRole.Admin || newRole === MemberRole.Editor || newRole === MemberRole.Commenter || newRole === MemberRole.Viewer,
+        } as BoardMember
+
+        setConfirmAddUser(null)
+        setEditorState(EditorState.moveSelectionToEnd(editorState))
+        ref.current?.focus()
+        await mutator.createBoardMember(newMember)
+    }, [board, editorState])
 
     const [initialTextCache, setInitialTextCache] = useState<string | undefined>(initialText)
+    const [initialTextUsed, setInitialTextUsed] = useState<boolean>(false)
 
     // avoiding stale closure
     useEffect(() => {
@@ -97,9 +147,16 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         // for this if condition here, mentions don't work. I suspect it's because without
         // the in condition, we're changing editor state twice during component initialization
         // and for some reason it causes mentions to not show up.
-        if (initialText && initialText !== initialTextCache) {
+
+        // initial text should only be used once, i'e', initially
+        // `initialTextUsed` flag records if the initialText prop has been used
+        // to se the editor state once as a truthy value.
+        // Once used, we don't react to its changing value
+
+        if (!initialTextUsed && initialText && initialText !== initialTextCache) {
             setEditorState(generateEditorState(initialText || ''))
             setInitialTextCache(initialText)
+            setInitialTextUsed(true)
         }
     }, [initialText])
 
@@ -124,16 +181,13 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         return {plugins, MentionSuggestions, EmojiSuggestions}
     }, [])
 
-    useEffect(() => {
-        if (isEditing) {
-            if (initialText === '') {
-                setEditorState(EditorState.createEmpty())
-            } else {
-                setEditorState(EditorState.moveSelectionToEnd(editorState))
-            }
-            setTimeout(() => ref.current?.focus(), 200)
-        }
-    }, [isEditing, initialText])
+    const onEditorStateChange = useCallback((newEditorState: EditorState) => {
+        // newEditorState.
+        const newText = newEditorState.getCurrentContent().getPlainText()
+
+        onChange && onChange(newText)
+        setEditorState(newEditorState)
+    }, [onChange])
 
     const customKeyBindingFn = useCallback((e: React.KeyboardEvent) => {
         if (isMentionPopoverOpen || isEmojiPopoverOpen) {
@@ -144,12 +198,34 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
             return 'editor-blur'
         }
 
+        if (getDefaultKeyBinding(e) === 'undo') {
+            return 'editor-undo'
+        }
+
+        if (getDefaultKeyBinding(e) === 'redo') {
+            return 'editor-redo'
+        }
+
         return getDefaultKeyBinding(e as any)
     }, [isEmojiPopoverOpen, isMentionPopoverOpen])
 
-    const handleKeyCommand = useCallback((command: string): DraftHandleValue => {
+    const handleKeyCommand = useCallback((command: string, currentState: EditorState): DraftHandleValue => {
         if (command === 'editor-blur') {
             ref.current?.blur()
+            return 'handled'
+        }
+
+        if (command === 'editor-redo') {
+            const selectionRemovedState = EditorState.redo(currentState)
+            onEditorStateChange(EditorState.redo(selectionRemovedState))
+
+            return 'handled'
+        }
+
+        if (command === 'editor-undo') {
+            const selectionRemovedState = EditorState.undo(currentState)
+            onEditorStateChange(EditorState.undo(selectionRemovedState))
+
             return 'handled'
         }
 
@@ -157,16 +233,12 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
     }, [])
 
     const onEditorStateBlur = useCallback(() => {
+        if (confirmAddUser) {
+            return
+        }
         const text = editorState.getCurrentContent().getPlainText()
         onBlur && onBlur(text)
     }, [editorState, onBlur])
-
-    const onEditorStateChange = useCallback((newEditorState: EditorState) => {
-        const newText = newEditorState.getCurrentContent().getPlainText()
-
-        onChange && onChange(newText)
-        setEditorState(newEditorState)
-    }, [onChange])
 
     const onMentionPopoverOpenChange = useCallback((open: boolean) => {
         setIsMentionPopoverOpen(open)
@@ -184,10 +256,7 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         debouncedLoadSuggestion(value)
     }, [suggestions])
 
-    let className = 'MarkdownEditorInput'
-    if (!isEditing) {
-        className += ' MarkdownEditorInput--IsNotEditing'
-    }
+    const className = 'MarkdownEditorInput'
 
     return (
         <div
@@ -210,11 +279,31 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                 suggestions={suggestions}
                 onSearchChange={onSearchChange}
                 entryComponent={Entry}
+                onAddMention={(mention) => {
+                    if (mention.isBoardMember) {
+                        return
+                    }
+                    setConfirmAddUser(mention.user)
+                }}
             />
             <EmojiSuggestions
                 onOpen={onEmojiPopoverOpen}
                 onClose={onEmojiPopoverClose}
             />
+            {confirmAddUser &&
+                <RootPortal>
+                    <ConfirmAddUserForNotifications
+                        allowManageBoardRoles={allowManageBoardRoles}
+                        minimumRole={board.minimumRole}
+                        user={confirmAddUser}
+                        onConfirm={addUser}
+                        onClose={() => {
+                            setConfirmAddUser(null)
+                            setEditorState(EditorState.moveSelectionToEnd(editorState))
+                            ref.current?.focus()
+                        }}
+                    />
+                </RootPortal>}
         </div>
     )
 }
