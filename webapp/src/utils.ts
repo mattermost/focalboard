@@ -4,6 +4,8 @@ import {marked} from 'marked'
 import {IntlShape} from 'react-intl'
 import moment from 'moment'
 
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import {generatePath, match as routerMatch} from 'react-router-dom'
 
 import {History} from 'history'
@@ -309,7 +311,19 @@ class Utils {
     }
 
     static htmlFromMarkdownWithRenderer(text: string, renderer: marked.Renderer): string {
-        const html = marked(text.replace(/</g, '&lt;'), {renderer, breaks: true})
+        const newText = text.replace(/</g, '&lt;').replace(
+            /\$\$([^$]*?)\$\$([^\S\r\n]*\n)?/g, // Matches $$…$$ plus trailing whitespace & newline (if any)
+            (match: string, p1: string) => {
+                return katex.renderToString(p1, {displayMode: true, throwOnError: false})
+            },
+        ).replace(
+            /\$([^]*?)\$/g,
+            (match: string, p1: string) => {
+                return katex.renderToString(p1, {displayMode: false, throwOnError: false})
+            },
+        )
+
+        const html = marked(newText, {renderer, breaks: true})
         return html.trim()
     }
 
